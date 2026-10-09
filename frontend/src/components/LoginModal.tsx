@@ -9,27 +9,50 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) => {
+  const [tab, setTab] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const user = await apiRequest<User>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          username_or_email: username,
-          password: password,
-        }),
-      });
-      onSuccess(user);
+      if (tab === 'login') {
+        const user = await apiRequest<User>('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username_or_email: username,
+            password: password,
+          }),
+        });
+        onSuccess(user);
+      } else {
+        // Register flow
+        await apiRequest<User>('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: username,
+            email: email,
+            password: password,
+          }),
+        });
+        // Auto-login after registration
+        const user = await apiRequest<User>('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username_or_email: username,
+            password: password,
+          }),
+        });
+        onSuccess(user);
+      }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify credentials.');
+      setError(err.message || (tab === 'login' ? 'Authentication failed. Please verify credentials.' : 'Registration failed.'));
     } finally {
       setLoading(false);
     }
@@ -44,7 +67,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Sign In to CivicGrid</h2>
+              <h2 className="text-sm font-bold text-slate-100">
+                {tab === 'login' ? 'Sign In to CivicGrid' : 'Create Citizen Account'}
+              </h2>
               <p className="text-[11px] text-slate-400">Secure HTTP-only cookie authentication</p>
             </div>
           </div>
@@ -57,6 +82,32 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
           </button>
         </div>
 
+        {/* Tab Selector */}
+        <div className="flex rounded-xl bg-charcoal-800 p-1 border border-charcoal-700">
+          <button
+            type="button"
+            onClick={() => { setTab('login'); setError(null); }}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              tab === 'login'
+                ? 'bg-electric-500 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTab('register'); setError(null); }}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              tab === 'register'
+                ? 'bg-electric-500 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Register
+          </button>
+        </div>
+
         {error && (
           <div className="p-3 rounded-xl bg-red-950/50 border border-red-500/50 text-xs text-red-300 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
@@ -64,9 +115,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label htmlFor="login-username" className="block text-xs font-mono text-slate-300 mb-1">USERNAME OR EMAIL</label>
+            <label htmlFor="login-username" className="block text-xs font-mono text-slate-300 mb-1">
+              {tab === 'login' ? 'USERNAME OR EMAIL' : 'USERNAME'}
+            </label>
             <input
               id="login-username"
               type="text"
@@ -78,6 +131,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
             />
           </div>
 
+          {tab === 'register' && (
+            <div>
+              <label htmlFor="register-email" className="block text-xs font-mono text-slate-300 mb-1">
+                EMAIL ADDRESS
+              </label>
+              <input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-charcoal-800 border border-charcoal-700 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-electric-400"
+                autoComplete="email"
+                required
+              />
+            </div>
+          )}
+
           <div>
             <label htmlFor="login-password" className="block text-xs font-mono text-slate-300 mb-1">PASSWORD</label>
             <input
@@ -86,7 +156,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-charcoal-800 border border-charcoal-700 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-electric-400"
-              autoComplete="current-password"
+              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
               required
             />
           </div>
@@ -97,7 +167,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
             disabled={loading}
             className="w-full py-2.5 rounded-xl text-xs font-mono font-bold bg-electric-500 hover:bg-electric-400 text-white transition-all shadow-md disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? (tab === 'login' ? 'Authenticating...' : 'Registering...') : (tab === 'login' ? 'Sign In' : 'Create Account')}
           </button>
         </form>
       </div>
