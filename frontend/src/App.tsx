@@ -9,7 +9,7 @@ import {
   InfrastructureAsset,
 } from './types';
 import { apiRequest } from './api/client';
-import { Navbar } from './components/Navbar';
+import { AppShell } from './components/AppShell';
 import { GridHealthBar } from './components/GridHealthBar';
 import { TopologyCanvas } from './components/TopologyCanvas';
 import { ScenarioControlPanel } from './components/ScenarioControlPanel';
@@ -230,133 +230,134 @@ export const App: React.FC = () => {
   const activeFaultsCount = topology?.edges.filter((e) => e.status === 'FAULTED').length || 0;
 
   return (
-    <div className="min-h-screen bg-charcoal-950 flex flex-col selection:bg-electric-500 selection:text-white">
-      {/* Navigation */}
-      <Navbar
+    <>
+      <AppShell
         currentUser={currentUser}
         activeRole={activeRole}
+        setActiveRole={setActiveRole}
         onLogout={handleLogout}
         onOpenLogin={() => setLoginModalOpen(true)}
-      />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Real-Time Grid Health Meter — strictly for Grid Operator / Admin roles */}
-        {topology && isGridOperator && (
-          <GridHealthBar
-            state={topology.state}
-            islands={topology.islands}
-            activeFaultsCount={activeFaultsCount}
-            onOpenWhyRestoration={openWhyRestoration}
-          />
-        )}
-
-        {/* View Switcher based on Active Operational Role */}
-        {activeRole === 'ADMIN' && (
-          <div className="space-y-6">
-            {/* Scenario Suite & Fault Trigger Toolbar */}
-            {topology && (
-              <ScenarioControlPanel
-                scenarios={scenarios}
-                edges={topology.edges}
-                onRunScenario={handleRunScenario}
-                onResetGrid={handleResetGrid}
-                onInjectFault={handleInjectFault}
-                loading={loading}
-              />
-            )}
-
-            {/* Interactive React Flow Topology View */}
-            {topology && (
-              <TopologyCanvas
-                nodes={topology.nodes}
-                edges={topology.edges}
-                islands={topology.islands}
-                onSelectNode={setSelectedNode}
-                onSelectEdge={() => {}}
-              />
-            )}
-
-            {/* Admin Logs and User Controls */}
-            <AdminDashboard />
-          </div>
-        )}
-
-        {activeRole === 'DEPARTMENT_OFFICER' && (
-          <div className="space-y-6">
-            {topology && (
-              <TopologyCanvas
-                nodes={topology.nodes}
-                edges={topology.edges}
-                islands={topology.islands}
-                onSelectNode={setSelectedNode}
-                onSelectEdge={() => {}}
-              />
-            )}
-            <OfficerDashboard
-              onOpenWhyClustering={openWhyClustering}
-              onOpenWhyPriority={openWhyPriority}
-              onOpenWhyRisk={openWhyRisk}
+      >
+        <div className="space-y-6">
+          {/* Real-Time Grid Health Meter — strictly for Grid Operator / Admin roles */}
+          {topology && isGridOperator && (
+            <GridHealthBar
+              state={topology.state}
+              islands={topology.islands}
+              activeFaultsCount={activeFaultsCount}
+              onOpenWhyRestoration={openWhyRestoration}
             />
-          </div>
-        )}
+          )}
 
-        {activeRole === 'FIELD_WORKER' && (
-          <div className="space-y-6">
-            <WorkerDashboard />
-          </div>
-        )}
+          {/* View Switcher based on Active Operational Role */}
+          {activeRole === 'ADMIN' && (
+            <div className="space-y-6">
+              {/* Scenario Suite & Fault Trigger Toolbar */}
+              {topology && (
+                <ScenarioControlPanel
+                  scenarios={scenarios}
+                  edges={topology.edges}
+                  onRunScenario={handleRunScenario}
+                  onResetGrid={handleResetGrid}
+                  onInjectFault={handleInjectFault}
+                  loading={loading}
+                />
+              )}
 
-        {activeRole === 'CITIZEN' && (
-          <CitizenPortal assets={assets} onReportCreated={() => {}} />
-        )}
+              {/* Interactive React Flow Topology View */}
+              {topology && (
+                <TopologyCanvas
+                  nodes={topology.nodes}
+                  edges={topology.edges}
+                  islands={topology.islands}
+                  onSelectNode={setSelectedNode}
+                  onSelectEdge={() => {}}
+                />
+              )}
 
-        {/* Live Grid Event Log Stream — strictly visible to Grid Operators */}
-        {isGridOperator && (
-          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-electric-500/15 text-electric-400">
-                  <Bell className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
-                  REAL-TIME AUDITED TELEMETRY & EVENT STREAM
-                </span>
-              </div>
-              <button
-                onClick={refreshEvents}
-                className="text-slate-400 hover:text-slate-200 transition-all"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
+              {/* Admin Logs and User Controls */}
+              <AdminDashboard />
             </div>
+          )}
 
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {events.slice(0, 8).map((evt) => (
-                <div
-                  key={evt.id}
-                  className="flex items-center justify-between text-xs font-mono p-2 rounded-lg bg-charcoal-950/70 border border-charcoal-800"
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        evt.severity === 'CRITICAL'
-                          ? 'bg-red-500 animate-ping'
-                          : evt.severity === 'WARNING'
-                          ? 'bg-amber-400'
-                          : 'bg-emerald-400'
-                      }`}
-                    />
-                    <span className="text-slate-300">{evt.description}</span>
+          {activeRole === 'DEPARTMENT_OFFICER' && (
+            <div className="space-y-6">
+              {topology && (
+                <TopologyCanvas
+                  nodes={topology.nodes}
+                  edges={topology.edges}
+                  islands={topology.islands}
+                  onSelectNode={setSelectedNode}
+                  onSelectEdge={() => {}}
+                />
+              )}
+              <OfficerDashboard
+                onOpenWhyClustering={openWhyClustering}
+                onOpenWhyPriority={openWhyPriority}
+                onOpenWhyRisk={openWhyRisk}
+              />
+            </div>
+          )}
+
+          {activeRole === 'FIELD_WORKER' && (
+            <div className="space-y-6">
+              <WorkerDashboard />
+            </div>
+          )}
+
+          {activeRole === 'CITIZEN' && (
+            <CitizenPortal assets={assets} onReportCreated={() => {}} />
+          )}
+
+          {/* Live Grid Event Log Stream — strictly visible to Grid Operators */}
+          {isGridOperator && (
+            <div className="bg-[var(--surface-dark-1)] border border-[var(--border-dark)] rounded-2xl p-4 shadow-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded-lg bg-[var(--coral-strong)]/20 text-[var(--coral-light)]">
+                    <Bell className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-[10px] text-slate-500 shrink-0 ml-3">
-                    {new Date(evt.timestamp).toLocaleTimeString()}
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-dark-primary)]">
+                    REAL-TIME AUDITED TELEMETRY & EVENT STREAM
                   </span>
                 </div>
-              ))}
+                <button
+                  onClick={refreshEvents}
+                  className="text-[var(--text-dark-muted)] hover:text-[var(--text-dark-primary)] transition-all"
+                  aria-label="Refresh grid events"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {events.slice(0, 8).map((evt) => (
+                  <div
+                    key={evt.id}
+                    className="flex items-center justify-between text-xs font-mono p-2 rounded-lg bg-[var(--surface-dark-2)] border border-[var(--border-dark)]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          evt.severity === 'CRITICAL'
+                            ? 'bg-red-500 animate-ping'
+                            : evt.severity === 'WARNING'
+                            ? 'bg-amber-400'
+                            : 'bg-emerald-400'
+                        }`}
+                      />
+                      <span className="text-[var(--text-dark-primary)]">{evt.description}</span>
+                    </div>
+                    <span className="text-[10px] text-[var(--text-dark-muted)] shrink-0 ml-3">
+                      {new Date(evt.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </div>
+      </AppShell>
 
       {/* Asset Inspection Drawer */}
       <AssetDrawer
@@ -381,7 +382,7 @@ export const App: React.FC = () => {
           onClose={() => setLoginModalOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 };
 export default App;

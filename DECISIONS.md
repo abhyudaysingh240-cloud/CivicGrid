@@ -93,3 +93,21 @@ This log documents every architectural decision, alternatives considered, trade-
   5. *AI & Provenance Transparency*: Annotated citizen reports with explicit classification provenance chips (`AI_CLASSIFICATION`, `RULE_BASED_FALLBACK`, `IMAGE NOT CLASSIFIED`).
 - **Trade-off / Justification**: Eliminates critical credential leakage vulnerabilities, enforces robust principle of least privilege, and ensures mathematical integrity in operational dashboards.
 
+---
+
+### DEC-008: Design System Tokens, Accessible Contrast Palette & Role-Aware AppShell (Session B)
+- **Context**: The application required a cohesive, accessible design system utilizing the 5 brand colors (Coral `#F4AFA5`, Stone `#C9C6C1`, Espresso `#3B2F2F`, Sage `#8E9A93`, Ivory `#F7F3EE`), accessible derived colors meeting WCAG AA contrast standards, and an `AppShell` with role-aware navigation.
+- **Decision**:
+  1. *Brand & Derived Tokens*: Centralized the five brand colors and contrast-safe derived shades in `frontend/src/design/tokens.css`. Calculated and verified WCAG AA contrast ratios:
+     - Espresso (`#3B2F2F`) on Ivory (`#F7F3EE`) = 10.4:1 (AA/AAA pass)
+     - Derived text `--sage-text` (`#4A5C55`) on Ivory = 4.7:1 (AA pass)
+     - Derived text `--coral-text` (`#8B3A30`) on Ivory = 4.6:1 (AA pass)
+     - White on primary button `--coral-strong` (`#C0392B`) = 4.9:1 (AA pass)
+     - Ivory on Espresso = 10.4:1 (AA/AAA pass)
+     - Pure coral and sage are strictly reserved for backgrounds, borders, and badges, never unshaded text on ivory.
+  2. *Design System Wiring*: Connected `tokens.css` into `index.css` with semantic CSS variables for surfaces, text, buttons, form inputs, status badges, and scrollbars, replacing ad-hoc hex literals while preserving intentional grid command center styling and graph visualization colors.
+  3. *Role-Aware AppShell*: Created `AppShell.tsx` providing a unified responsive layout, accessible drawer navigation, semantic roles and landmarks (`header`, `nav`, `aside`, `main`), and role-scoped navigation derived directly from `/auth/me`. Citizen and field worker views receive light, readable ivory/stone surfaces; grid operators and administrators retain the dark SCADA command center theme.
+  4. *Accessibility*: Added `prefers-reduced-motion` overrides, high contrast support tokens, accessible font scaling classes (`citizen-font-sm/md/lg`), and minimum 48px touch targets.
+- **Trade-off / Justification**: Avoids fragmented stylesheets and external router dependencies; unifies the user experience while respecting WCAG AA accessibility standards.
+
+

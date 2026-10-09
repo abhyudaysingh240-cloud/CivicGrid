@@ -1,74 +1,48 @@
 import React from 'react';
-import { CheckCircle2, AlertTriangle, AlertOctagon, RefreshCw, XCircle, Info } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Info, ZapOff, Wifi, Clock, Activity } from 'lucide-react';
 
-export type StatusType = 
-  | 'HEALTHY' 
-  | 'WARNING' 
-  | 'DEGRADED' 
-  | 'FAULTED' 
-  | 'CRITICAL' 
-  | 'RESTORED' 
-  | 'OPEN' 
-  | 'UNAVAILABLE' 
-  | 'INFO';
+type StatusType = 'HEALTHY' | 'WARNING' | 'FAULTED' | 'ISOLATED' | 'RESTORED' | 'RESOLVED' | 'OPEN' | 'CRITICAL' | 'NORMAL' | 'SUBMITTED' | 'VERIFIED' | 'IN_PROGRESS' | 'REJECTED' | 'ASSIGNED' | 'EN_ROUTE' | 'ON_SITE' | 'COMPLETED' | 'OPERATIONAL' | 'DEGRADED';
 
 interface StatusBadgeProps {
   status: StatusType | string;
-  label?: string;
+  size?: 'xs' | 'sm' | 'md';
+  dark?: boolean;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {
-  const norm = (status || '').toUpperCase();
-  const displayLabel = label || norm;
+const statusConfig: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+  HEALTHY:      { label: 'Healthy',      className: 'badge-healthy',  icon: <CheckCircle className="w-3 h-3" /> },
+  NORMAL:       { label: 'Normal',       className: 'badge-healthy',  icon: <CheckCircle className="w-3 h-3" /> },
+  OPERATIONAL:  { label: 'Operational',  className: 'badge-healthy',  icon: <CheckCircle className="w-3 h-3" /> },
+  RESTORED:     { label: 'Restored',     className: 'badge-restored', icon: <Activity className="w-3 h-3" /> },
+  RESOLVED:     { label: 'Resolved',     className: 'badge-resolved', icon: <CheckCircle className="w-3 h-3" /> },
+  COMPLETED:    { label: 'Completed',    className: 'badge-resolved', icon: <CheckCircle className="w-3 h-3" /> },
+  WARNING:      { label: 'Warning',      className: 'badge-warning',  icon: <AlertTriangle className="w-3 h-3" /> },
+  DEGRADED:     { label: 'Degraded',     className: 'badge-warning',  icon: <AlertTriangle className="w-3 h-3" /> },
+  IN_PROGRESS:  { label: 'In Progress',  className: 'badge-warning',  icon: <Clock className="w-3 h-3" /> },
+  EN_ROUTE:     { label: 'En Route',     className: 'badge-warning',  icon: <Clock className="w-3 h-3" /> },
+  ON_SITE:      { label: 'On Site',      className: 'badge-warning',  icon: <Clock className="w-3 h-3" /> },
+  FAULTED:      { label: 'Faulted',      className: 'badge-faulted',  icon: <XCircle className="w-3 h-3" /> },
+  CRITICAL:     { label: 'Critical',     className: 'badge-critical', icon: <XCircle className="w-3 h-3" /> },
+  RECONFIGURATION_FAILED: { label: 'Reconfig Failed', className: 'badge-critical', icon: <XCircle className="w-3 h-3" /> },
+  REJECTED:     { label: 'Rejected',     className: 'badge-critical', icon: <XCircle className="w-3 h-3" /> },
+  ISOLATED:     { label: 'Isolated',     className: 'badge-isolated', icon: <ZapOff className="w-3 h-3" /> },
+  ISLANDED:     { label: 'Islanded',     className: 'badge-isolated', icon: <ZapOff className="w-3 h-3" /> },
+  OPEN:         { label: 'Open',         className: 'badge-open',     icon: <Wifi className="w-3 h-3" /> },
+  SUBMITTED:    { label: 'Submitted',    className: 'badge-stone',    icon: <Info className="w-3 h-3" /> },
+  VERIFIED:     { label: 'Verified',     className: 'badge-sage',     icon: <CheckCircle className="w-3 h-3" /> },
+  ASSIGNED:     { label: 'Assigned',     className: 'badge-sage',     icon: <Clock className="w-3 h-3" /> },
+  ANALYZING:    { label: 'Analyzing',    className: 'badge-warning',  icon: <Activity className="w-3 h-3" /> },
+  RECONFIGURING:{ label: 'Reconfig.',    className: 'badge-warning',  icon: <Activity className="w-3 h-3" /> },
+  FAULT_DETECTED:{ label: 'Fault',       className: 'badge-faulted',  icon: <AlertTriangle className="w-3 h-3" /> },
+};
 
-  if (norm === 'HEALTHY' || norm === 'OPERATIONAL' || norm === 'RESOLVED') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-        <CheckCircle2 className="w-3 h-3 shrink-0" />
-        <span>{displayLabel}</span>
-      </span>
-    );
-  }
-
-  if (norm === 'WARNING' || norm === 'IN_PROGRESS') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-        <AlertTriangle className="w-3 h-3 shrink-0" />
-        <span>{displayLabel}</span>
-      </span>
-    );
-  }
-
-  if (norm === 'CRITICAL' || norm === 'FAULTED' || norm === 'RECONFIGURATION_FAILED') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-red-500/15 text-red-400 border border-red-500/40 ring-1 ring-red-500/20">
-        <AlertOctagon className="w-3 h-3 shrink-0" />
-        <span>{displayLabel}</span>
-      </span>
-    );
-  }
-
-  if (norm === 'RESTORED') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-teal-500/15 text-teal-300 border border-teal-500/30">
-        <RefreshCw className="w-3 h-3 shrink-0" />
-        <span>{displayLabel}</span>
-      </span>
-    );
-  }
-
-  if (norm === 'OPEN') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium border border-dashed border-slate-500 text-slate-400">
-        <span>{displayLabel} (TIE)</span>
-      </span>
-    );
-  }
-
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'sm', dark: _dark = false }) => {
+  const cfg = statusConfig[status] ?? { label: status, className: 'badge-stone', icon: <Info className="w-3 h-3" /> };
+  const sizeClass = size === 'xs' ? 'text-[10px] px-1.5 py-0.5 gap-1' : size === 'md' ? 'text-sm px-3 py-1 gap-1.5' : '';
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
-      <Info className="w-3 h-3 shrink-0 text-slate-400" />
-      <span>{displayLabel}</span>
+    <span className={`badge ${cfg.className} ${sizeClass}`} role="status" aria-label={`Status: ${cfg.label}`}>
+      {cfg.icon}
+      {cfg.label}
     </span>
   );
 };

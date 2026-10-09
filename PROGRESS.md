@@ -20,16 +20,17 @@
 | **Phase 5** | Role Dashboards (Citizen, Officer, Worker, Admin), Officer Workflow, "Why?" Explanation Panels | DONE | Component integration verified | 4 Role portals, "Why?" modals for restoration, clustering, risk, and priority |
 | **Phase 6** | System Hardening, Failure Case Verification, Acceptance Suite, `JUDGES_QA.md`, Demo Script, Final Deliverables | DONE | 14/14 Acceptance Criteria Passing | Acceptance pipeline 100% PASS, `JUDGES_QA.md` and `DEMO_SCRIPT.md` delivered |
 | **Session A** | Security & Data Integrity Hardening (P1-P4, RBAC on Grid APIs, Metric Semantics, AI Provenance, CLI Tools, Audit) | DONE | 22/22 Unit Tests Passing (100%) | Credential purge verified in `dist`, server-side RBAC enforced, login rate limiter, Section A3 metric semantics, `DUMMY_DATA_AUDIT.md` published |
+| **Session B** | Design System & AppShell (Brand tokens, accessible derived colors, AppShell, role navigation, hex audit) | DONE | `tsc && vite build` PASS (0 errors) | 5 brand colors defined once in `tokens.css`, WCAG AA contrast verified, `AppShell.tsx` responsive navigation, zero unverified hex in dashboard/UI components |
 
 ---
 
 ## Test Verification Summary
-- **Unit & Integration Tests**: 22/22 PASS (`.\.venv\Scripts\pytest.exe -v`)
-- **End-to-End Acceptance**: 14/14 Criteria PASS (`scripts/run_acceptance.py`)
-- **Frontend Type Check & Build**: 0 Errors (`npm.cmd run build --prefix frontend`)
+- **Unit & Integration Tests**: 22/22 PASS (`.\.venv\Scripts\python.exe -m pytest -v`)
+- **End-to-End Acceptance**: 14/14 Criteria PASS (`.\.venv\Scripts\python.exe scripts/run_acceptance.py`)
+- **Frontend Type Check & Build**: 0 Errors (`& "C:\Program Files\nodejs\npm.cmd" run build`)
 - **Credential Integrity**: 0 Leaked Passwords in `frontend/dist` or source components
 - **Scenario Determinism**: 100% Reproducible (Scenarios A-E)
-- **Live Demo & Evaluation**: Documented in `DEMO_SCRIPT.md` & `JUDGES_QA.md`
+- **Design Tokens & Accessibility**: WCAG AA contrast compliant (10.4:1, 4.9:1, 4.7:1, 4.6:1), `prefers-reduced-motion` enabled
 
-NEXT STEP: SESSION B: DESIGN SYSTEM + FRONTEND STRUCTURE (B1: Design tokens in tokens.css, role-aware AppShell & navigation, and screen typography/hierarchy polish)
+NEXT STEP: SESSION C: OPERATIONAL ROLE DASHBOARDS (C1: Verify backend RBAC endpoints for Citizen/Worker/Officer/Admin, add IDOR/role tests, connect live database workflows, and verify absence of fabricated data)
 

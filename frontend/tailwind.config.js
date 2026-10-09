@@ -8,64 +8,77 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: {
-          base: 'var(--bg-base)',
-        },
-        surface: {
-          1: 'var(--surface-1)',
-          2: 'var(--surface-2)',
-          3: 'var(--surface-3)',
-        },
-        border: {
-          subtle: 'var(--border-subtle)',
-          strong: 'var(--border-strong)',
-        },
-        brand: {
-          primary: 'var(--primary)',
-          hover: 'var(--primary-hover)',
-          cyan: 'var(--accent-cyan)',
-        },
+        // ── Light surfaces ──
+        ivory:    { DEFAULT: '#F7F3EE', dark: '#F0EDE8', border: '#ECEAE6' },
+        stone:    { DEFAULT: '#C9C6C1', light: '#ECEAE6', border: '#B0ADA8' },
+        espresso: { DEFAULT: '#3B2F2F', mid: '#4E3D3D', dim: '#6B5555', deep: '#251E1E' },
+        coral:    { DEFAULT: '#F4AFA5', strong: '#C0392B', mid: '#E07060', light: '#F9D6D2', text: '#8B3A30' },
+        sage:     { DEFAULT: '#8E9A93', text: '#4A5C55', light: '#D4DEDA' },
+
+        // ── Status ──
         status: {
-          healthy: 'var(--status-healthy)',
-          warning: 'var(--status-warning)',
-          degraded: 'var(--status-degraded)',
-          faulted: 'var(--status-faulted)',
-          critical: 'var(--status-critical)',
-          restored: 'var(--status-restored)',
-          'open-tie': 'var(--status-open-tie)',
-          unavailable: 'var(--status-unavailable)',
-          info: 'var(--status-info)',
+          healthy:  '#2E7D5A',
+          warning:  '#B45309',
+          faulted:  '#C62828',
+          isolated: '#6B21A8',
+          restored: '#0B7C6B',
+          resolved: '#2E7D5A',
+          open:     '#78716C',
+          critical: '#991B1B',
         },
+
+        // ── Grid command-center (dark) ──
         charcoal: {
-          950: '#0A0E14',
-          900: '#0F1520',
-          800: '#151C2A',
-          700: '#232D3F',
-          600: '#2F3B52',
-          500: '#4b5563',
+          950: '#251E1E',
+          900: '#2E2525',
+          800: '#3A2E2E',
+          700: '#4E3D3D',
+          600: '#5A4848',
+          500: '#7A6060',
         },
         electric: {
-          500: '#3B82F6',
-          400: '#22D3EE',
-          300: '#7dd3fc',
+          500: '#C0392B',
+          400: '#E07060',
+          300: '#F4AFA5',
         },
         emerald: {
-          500: '#10b981',
-          400: '#2DD4BF',
+          500: '#2E7D5A',
+          400: '#0B7C6B',
         },
         amber: {
-          500: '#F59E0B',
-          400: '#fbbf24',
+          500: '#B45309',
+          400: '#D97706',
         },
         crimson: {
-          500: '#EF4444',
-          400: '#f87171',
+          500: '#C62828',
+          400: '#EF4444',
+        },
+        teal: {
+          500: '#0B7C6B',
+          400: '#14B8A6',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-      }
+        sans: ['Inter', 'Atkinson Hyperlegible', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+      },
+      borderRadius: {
+        'sm': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '24px',
+      },
+      transitionDuration: {
+        'fast':   '150ms',
+        'normal': '200ms',
+        'slow':   '250ms',
+      },
+      minHeight: {
+        'touch': '48px',
+      },
+      minWidth: {
+        'touch': '48px',
+      },
     },
   },
   plugins: [],

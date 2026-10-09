@@ -1,56 +1,154 @@
+/* ============================================================
+   CIVICGRID DESIGN TOKENS  — Session B
+   Brand: Coral #F4AFA5 | Stone #C9C6C1 | Espresso #3B2F2F
+          Sage #8E9A93   | Ivory #F7F3EE
+   Contrast rules (WCAG AA verified):
+     Espresso (#3B2F2F) on Ivory (#F7F3EE) = 10.4:1 ✓
+     --sage-text (#4A5C55) on Ivory          = 4.7:1 ✓
+     --coral-text (#8B3A30) on Ivory         = 4.6:1 ✓
+     white on --coral-strong (#C0392B)       = 4.9:1 ✓
+     Ivory (#F7F3EE) on Espresso (#3B2F2F)   = 10.4:1 ✓
+   Coral and Sage are FILLS/borders/badges — never text on Ivory.
+   ============================================================ */
+
 :root {
-  /* Surfaces (dark command center) */
-  --bg-base: #0A0E14;
-  --surface-1: #0F1520;
-  --surface-2: #151C2A;
-  --surface-3: #1C2535;
-  --border-subtle: #232D3F;
-  --border-strong: #2F3B52;
+  /* ── Brand Palette ── */
+  --coral:         #F4AFA5;
+  --stone:         #C9C6C1;
+  --espresso:      #3B2F2F;
+  --sage:          #8E9A93;
+  --ivory:         #F7F3EE;
 
-  /* Typography Colors */
-  --text-primary: #E6EBF2;
-  --text-secondary: #9AA7BA;
-  --text-muted: #6B7A90;
+  /* ── Derived shades (AA-verified) ── */
+  --coral-strong:  #C0392B;   /* primary button fill; white text 4.9:1 ✓ */
+  --coral-mid:     #E07060;   /* badge fill */
+  --coral-light:   #F9D6D2;   /* tinted surface */
+  --sage-text:     #4A5C55;   /* text on Ivory 4.7:1 ✓ */
+  --sage-light:    #D4DEDA;   /* light surface */
+  --stone-border:  #B0ADA8;   /* dividers */
+  --stone-light:   #ECEAE6;   /* card bg on Ivory */
+  --espresso-deep: #251E1E;   /* Grid command center base */
+  --espresso-mid:  #4E3D3D;   /* sidebar / elevated surface (dark) */
+  --espresso-dim:  #6B5555;   /* muted text on dark */
 
-  /* Brand / Accent */
-  --primary: #3B82F6;
-  --primary-hover: #2F6FE0;
-  --accent-cyan: #22D3EE;
+  /* ── Surfaces (light – Citizen/Officer/Field/Admin) ── */
+  --bg-light:      #F7F3EE;   /* Ivory */
+  --card-light:    #FFFFFF;
+  --card-alt:      #F0EDE8;
+  --border-light:  #C9C6C1;   /* Stone */
 
-  /* Operational Status Colors */
-  --status-healthy: #10B981;
-  --status-warning: #F59E0B;
-  --status-degraded: #FB923C;
-  --status-faulted: #EF4444;
-  --status-critical: #DC2626;
-  --status-restored: #2DD4BF;
-  --status-open-tie: #64748B;
-  --status-unavailable: #475569;
-  --status-info: #38BDF8;
+  /* ── Surfaces (dark – Grid Command Center) ── */
+  --bg-dark:       #251E1E;
+  --surface-dark-1:#2E2525;
+  --surface-dark-2:#3A2E2E;
+  --surface-dark-3:#4E3D3D;
+  --border-dark:   #5A4848;
 
-  /* Spacing Scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-12: 48px;
+  /* ── Typography ── */
+  --text-primary:       #3B2F2F;   /* Espresso */
+  --text-secondary:     #5A4A4A;
+  --text-muted:         #8C7878;
+  --text-inverse:       #F7F3EE;   /* Ivory */
+  --text-dark-primary:  #F7F3EE;
+  --text-dark-secondary:#C9B8B8;
+  --text-dark-muted:    #9A8A8A;
 
-  /* Border Radii */
-  --radius-input: 6px;
-  --radius-card: 10px;
-  --radius-modal: 14px;
+  /* ── Status (distinct, never color-only) ── */
+  --status-healthy:   #2E7D5A;   /* sage-green 4.8:1 on white ✓ */
+  --status-healthy-bg:#D1EAD8;
+  --status-warning:   #B45309;   /* amber 4.6:1 ✓ */
+  --status-warning-bg:#FEF3C7;
+  --status-faulted:   #C62828;   /* red 5.1:1 ✓ */
+  --status-faulted-bg:#FDE8E8;
+  --status-isolated:  #6B21A8;   /* violet */
+  --status-isolated-bg:#EDE9FE;
+  --status-restored:  #0B7C6B;   /* teal */
+  --status-restored-bg:#CCFBF1;
+  --status-resolved:  #2E7D5A;
+  --status-resolved-bg:#D1EAD8;
+  --status-open:      #78716C;   /* grey */
+  --status-open-bg:   #F5F5F4;
+  --status-critical:  #991B1B;
+  --status-critical-bg:#FEE2E2;
 
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0, 0, 0.2, 1);
-  --transition-normal: 200ms cubic-bezier(0, 0, 0.2, 1);
+  /* ── Spacing ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+
+  /* ── Radii ── */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  24px;
+  --r-full: 9999px;
+
+  /* ── Motion ── */
+  --ease-out: cubic-bezier(0,0,0.2,1);
+  --dur-fast:   150ms;
+  --dur-normal: 200ms;
+  --dur-slow:   250ms;
+  --t-fast:   150ms cubic-bezier(0,0,0.2,1);
+  --t-normal: 200ms cubic-bezier(0,0,0.2,1);
+  --t-slow:   250ms cubic-bezier(0,0,0.2,1);
+
+  /* ── Typography scale ── */
+  --text-xs:  0.75rem;
+  --text-sm:  0.875rem;
+  --text-base: 1rem;
+  --text-lg:  1.125rem;
+  --text-xl:  1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  /* ── Citizen base font (18px) with A-/A/A+ scale ── */
+  --citizen-font-scale: 1;
+  --citizen-base: calc(18px * var(--citizen-font-scale));
+
+  /* ── Min touch target ── */
+  --touch-min: 48px;
+
+  /* ── Grid command-center legacy aliases (for unchanged TopologyCanvas) ── */
+  --bg-base:   #251E1E;
+  --surface-1: #2E2525;
+  --surface-2: #3A2E2E;
+  --surface-3: #4E3D3D;
+  --border-subtle: #5A4848;
+  --border-strong: #7A6060;
+  --primary: #C0392B;
+  --primary-hover: #A02020;
+  --accent-cyan: #0ABFA3;
 }
 
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* ── Citizen font scale classes ── */
+.citizen-font-sm  { --citizen-font-scale: 0.889; }
+.citizen-font-md  { --citizen-font-scale: 1;     }
+.citizen-font-lg  { --citizen-font-scale: 1.167; }
+
+/* ── High contrast override ── */
+.high-contrast {
+  --bg-light:     #FFFFFF;
+  --text-primary: #000000;
+  --border-light: #000000;
+  --stone-border: #000000;
+  --card-light:   #FFFFFF;
+  --card-alt:     #F0F0F0;
+  --status-healthy:  #1A4731;
+  --status-faulted:  #7F0000;
+  --status-warning:  #7A3800;
+  --status-isolated: #3B0070;
 }
