@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #070a11;
+    color: #f1f5f9;
+  }
+}
+
+/* React Flow custom canvas styles */
+.react-flow__background {
+  background-color: #0b0f19 !important;
+}
+
+.react-flow__controls button {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+.react-flow__controls button:hover {
+  background-color: #334155 !important;
+  color: #38bdf8 !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Edge animations */
+@keyframes dash-pulse {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.edge-pulsing-fault {
+  stroke: #ef4444 !important;
+  stroke-width: 3px !important;
+  animation: pulse-red 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+    stroke-width: 3.5px;
+  }
+  50% {
+    opacity: 0.4;
+    stroke-width: 2px;
+  }
+}
+
+.edge-restored-tie {
+  stroke: #10b981 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 6 3;
+  animation: dash-pulse 1s linear infinite;
+}
+
+.edge-open-tie {
+  stroke: #f59e0b !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 4 4;
+}
