@@ -36,7 +36,11 @@ export const App: React.FC = () => {
 
   // Detail Drawer state
   const [selectedNode, setSelectedNode] = useState<GridNode | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<GridEdge | null>(null);
 
+  const handleSelectNode = (n: GridNode) => { setSelectedNode(n); setSelectedEdge(null); };
+  const handleSelectEdge = (e: GridEdge) => { setSelectedEdge(e); setSelectedNode(null); };
+  const handleCloseDrawer = () => { setSelectedNode(null); setSelectedEdge(null); };
   // Why Modal state
   const [whyType, setWhyType] = useState<WhyModalType>(null);
   const [whyData, setWhyData] = useState<any>(null);
@@ -270,8 +274,8 @@ export const App: React.FC = () => {
                   nodes={topology.nodes}
                   edges={topology.edges}
                   islands={topology.islands}
-                  onSelectNode={setSelectedNode}
-                  onSelectEdge={() => {}}
+                  onSelectNode={handleSelectNode}
+                  onSelectEdge={handleSelectEdge}
                 />
               )}
 
@@ -287,8 +291,8 @@ export const App: React.FC = () => {
                   nodes={topology.nodes}
                   edges={topology.edges}
                   islands={topology.islands}
-                  onSelectNode={setSelectedNode}
-                  onSelectEdge={() => {}}
+                  onSelectNode={handleSelectNode}
+                  onSelectEdge={handleSelectEdge}
                 />
               )}
               <OfficerDashboard
@@ -362,7 +366,8 @@ export const App: React.FC = () => {
       {/* Asset Inspection Drawer */}
       <AssetDrawer
         selectedNode={selectedNode}
-        onClose={() => setSelectedNode(null)}
+        selectedEdge={selectedEdge}
+        onClose={handleCloseDrawer}
         onInjectFaultOnLine={handleInjectFault}
         onOpenWhyRisk={openWhyRisk}
         canInjectFault={activeRole === 'ADMIN' || activeRole === 'DEPARTMENT_OFFICER'}

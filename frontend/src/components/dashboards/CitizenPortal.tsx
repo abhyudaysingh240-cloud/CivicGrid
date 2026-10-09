@@ -4,6 +4,7 @@ import { apiRequest } from '../../api/client';
 import { useToast } from '../ui/Toast';
 import { StatusBadge } from '../ui/StatusBadge';
 import { SourceBadge } from '../ui/SourceBadge';
+import { CivicMapView } from './CivicMapView';
 import {
   AlertTriangle, Zap, Droplets, Trash2, Construction, HelpCircle,
   MapPin, Camera, Mic, MicOff, ChevronRight, ChevronLeft, Check,
@@ -115,7 +116,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
   const srSupported = !!getSR();
 
   // View toggle: stepper vs my-reports
-  const [view, setView] = useState<'home' | 'report' | 'my-reports'>('home');
+  const [view, setView] = useState<'home' | 'report' | 'my-reports' | 'map'>('home');
 
   const scaleClass = fontScale === 'sm' ? 'citizen-font-sm' : fontScale === 'lg' ? 'citizen-font-lg' : 'citizen-font-md';
 
@@ -318,7 +319,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
               {[
                 { icon: AlertTriangle, label: 'Report a Problem', desc: 'Submit a new issue', action: () => { resetForm(); setView('report'); }, id: 'home-report-btn', color: 'border-[var(--coral)] bg-[var(--coral-light)]' },
                 { icon: FileText, label: 'My Reports', desc: 'Track your submissions', action: () => setView('my-reports'), id: 'home-myreports-btn', color: 'border-[var(--sage-light)] bg-[var(--sage-light)]' },
-                { icon: MapPin, label: 'View on Map', desc: 'See incidents near you', action: () => setView('my-reports'), id: 'home-map-btn', color: 'border-[var(--stone-border)] bg-[var(--stone-light)]' },
+                { icon: MapPin, label: 'View on Map', desc: 'See incidents near you', action: () => setView('map'), id: 'home-map-btn', color: 'border-[var(--stone-border)] bg-[var(--stone-light)]' },
               ].map(({ icon: Icon, label, desc, action, id, color }) => (
                 <button
                   key={id}
@@ -689,6 +690,16 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
                 <AlertTriangle className="w-4 h-4" /> Report Another
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Map View */}
+        {view === 'map' && (
+          <div>
+            <button onClick={() => setView('home')} className="text-sm text-[var(--sage-text)] hover:text-[var(--espresso)] flex items-center gap-1 mb-6">
+              <ChevronLeft className="w-4 h-4" /> Back to home
+            </button>
+            <CivicMapView initialReports={reports.length ? reports : undefined} />
           </div>
         )}
 

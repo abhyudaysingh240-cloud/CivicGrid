@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { GridNode, InfrastructureAsset } from '../types';
+import { GridNode, GridEdge, InfrastructureAsset } from '../types';
 import { apiRequest } from '../api/client';
-import { X, ShieldAlert, Zap, AlertTriangle, FileText, CheckCircle, Wrench, HelpCircle } from 'lucide-react';
+import { X, ShieldAlert, Zap, AlertTriangle, FileText, CheckCircle, Wrench, HelpCircle, Activity } from 'lucide-react';
 
 interface AssetDrawerProps {
   selectedNode: GridNode | null;
+  selectedEdge?: GridEdge | null;
   onClose: () => void;
   onInjectFaultOnLine: (edgeCode: string) => void;
   onOpenWhyRisk: (assetId: number) => void;
@@ -13,6 +14,7 @@ interface AssetDrawerProps {
 
 export const AssetDrawer: React.FC<AssetDrawerProps> = ({
   selectedNode,
+  selectedEdge,
   onClose,
   onInjectFaultOnLine,
   onOpenWhyRisk,
@@ -37,7 +39,86 @@ export const AssetDrawer: React.FC<AssetDrawerProps> = ({
       .finally(() => setLoading(false));
   }, [selectedNode]);
 
-  if (!selectedNode) return null;
+  if (!selectedNode && !selectedEdge) return null;
+
+  // ── Edge detail panel ──────────────────────────────────────────────────────
+  if (selectedEdge && !selectedNode) {
+    const e = selectedEdge;
+    const utilPct = e.max_capacity_mw > 0
+      ? Math.min((e.current_load_mw / e.max_capacity_mw) * 100, 100)
+      : 0;
+    const utilColor = utilPct >= 90 ? '#ef4444'
+      : utilPct >= 70 ? '#f97316'
+      : utilPct >= 50 ? '#f59e0b'
+      : utilPct >= 25 ? '#38bdf8'
+      : '#6366f1';
+    return (
+      <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-96 bg-charcoal-900 border-l border-charcoal-700/80 shadow-2xl p-6 flex flex-col gap-5 overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-charcoal-800">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-electric-500/15 text-electric-400">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-mono text-slate-400 uppercase">FEEDER LINE DETAIL</div>
+              <h2 className="text-base font-bold text-slate-100">{e.edge_code}</h2>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="text-sm font-semibold text-slate-200">{e.name}</div>
+
+        {/* Thermal utilization bar */}
+        <div>
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+            <span>THERMAL UTILIZATION</span>
+            <span style={{ color: utilColor }} className="font-bold">{utilPct.toFixed(1)}%</span>
+          </div>
+          <div className="h-2.5 w-full bg-charcoal-800 rounded-full overflow-hidden border border-charcoal-700">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${utilPct}%`, background: utilColor }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1">
+            <span>{e.current_load_mw.toFixed(2)} MW</span>
+            <span>Cap: {e.max_capacity_mw.toFixed(2)} MW</span>
+          </div>
+        </div>
+
+        {/* Properties grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Status', value: e.status, color: e.status === 'FAULTED' ? '#ef4444' : e.status === 'OPERATIONAL' ? '#10b981' : '#f59e0b' },
+            { label: 'Tie Switch', value: e.is_tie_switch ? 'YES' : 'NO', color: e.is_tie_switch ? '#f59e0b' : '#94a3b8' },
+            { label: 'Resistance', value: `${e.resistance_ohms.toFixed(3)} Ω`, color: undefined },
+            { label: 'Reactance', value: `${e.reactance_ohms.toFixed(3)} Ω`, color: undefined },
+            { label: 'Distance', value: `${e.distance_km.toFixed(2)} km`, color: undefined },
+            { label: 'Direction', value: `${e.src_code} → ${e.dst_code}`, color: '#38bdf8' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-charcoal-800/80 p-2.5 rounded-xl border border-charcoal-700/60">
+              <div className="text-[10px] font-mono text-slate-400 uppercase">{label}</div>
+              <div className="text-xs font-mono font-bold mt-1" style={{ color: color || '#e2e8f0' }}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Fault inject CTA */}
+        {canInjectFault && e.status !== 'FAULTED' && (
+          <button
+            onClick={() => { onInjectFaultOnLine(e.edge_code); onClose(); }}
+            className="mt-auto w-full py-2.5 rounded-xl text-sm font-bold font-mono bg-red-500/15 text-red-400 border border-red-500/40 hover:bg-red-500/25 hover:text-red-300 transition-all"
+          >
+            ⚡ Inject Fault on {e.edge_code}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-96 bg-charcoal-900 border-l border-charcoal-700/80 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">

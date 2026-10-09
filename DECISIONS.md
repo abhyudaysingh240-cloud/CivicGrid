@@ -112,14 +112,18 @@ This log documents every architectural decision, alternatives considered, trade-
 
 ---
 
-### DEC-009: Operational Role Dashboards, Field Worker Dispatches, System Health & IDOR Isolation (Session C)
-- **Context**: The four user personas (Citizen, Field Worker, Department Officer, System Admin) required end-to-end operational workflows connecting frontend UI directly to live database state with zero mocked/fabricated statistics, strict IDOR protection, and field worker dispatch lifecycle management.
+---
+
+### DEC-010: Civic Intelligence & Map / Restoration Visualization Hardening (Session D)
+- **Context**: Smart Grid topology visualization and Citizen GIS mapping required rich, interactive visual feedback: thermal load bands, island boundary indicators, interactive feeder line inspections with fault triggers, explainability modal integrations, and a real Leaflet-based GIS incident map for citizen reports.
 - **Decision**:
-  1. *Worker & Officer Dispatches*: Added `GET /api/v1/civic/assignments/workers` for Officers and Admins to inspect available active field crews. Added `GET /api/v1/civic/assignments/my` and `PATCH /api/v1/civic/assignments/{id}/status` allowing assigned workers to update state (`EN_ROUTE`, `ON_SITE`, `COMPLETED`) with field notes. Enforced IDOR bounds ensuring workers cannot mutate another worker's assignments (HTTP 403).
-  2. *Citizen Report Isolation*: Enforced strict IDOR protection on `GET /api/v1/civic/reports` and `GET /api/v1/civic/reports/{id}`, ensuring citizens only view reports they submitted, while Officers and Admins maintain full department visibility.
-  3. *Admin System Health & Department Telemetry*: Added `GET /api/v1/admin/system-health` and `GET /api/v1/admin/departments`, wired into `AdminDashboard.tsx` to provide live DB connection status, active grid state, user counts, incident metrics, and role management.
-  4. *Zero Fabricated Data*: All dashboard statistics, maps, tables, and metrics are derived strictly from database queries and algorithm outputs; zero hardcoded fake metrics.
-- **Trade-off / Justification**: Fully fulfills operational workflows with mathematically verifiable telemetry and robust multi-tenant authorization guards.
+  1. *Thermal Load Utilization Bands*: Implemented a 5-color utilization scale in `TopologyCanvas.tsx` (Indigo <25%, Sky <50%, Amber <70%, Orange <90%, Crimson >=90%) reflecting dynamic feeder line stress in real time.
+  2. *Island Boundary Visualizers*: Added dynamic island badges and boundary indicator rings to `TopologyCanvas.tsx` when the grid partitions, showing isolated feeder clusters and lost load metrics.
+  3. *Citizen GIS Map View*: Created `CivicMapView.tsx` utilizing dynamic Leaflet and OpenStreetMap tiles without external API key dependencies. Integrated into `CitizenPortal.tsx`, displaying color-coded category markers, status borders, interactive popup summaries, and unmapped incident side-lists.
+  4. *Feeder Line Detail Drawer & Explanations*: Extended `AssetDrawer.tsx` to handle `GridEdge` selections with live thermal utilization bars, impedance metrics, and simulated fault triggers. Wired edge and node clicks to `TopologyCanvas` across Admin and Officer views.
+  5. *Explainability Integration*: Audited and wired `WhyModal.tsx` across restoration candidate paths, asset predictive risk breakdown, incident multi-factor priority, and TF-IDF clustering explanations.
+- **Trade-off / Justification**: Provides high-clarity situational awareness for grid operators and intuitive geographical context for citizens without external commercial map licenses.
+
 
 
 
