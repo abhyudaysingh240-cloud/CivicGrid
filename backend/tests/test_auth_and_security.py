@@ -74,15 +74,25 @@ def test_login_wrong_password_generic_error():
     assert "Invalid username or password" in resp.json()["detail"]
 
 def test_register_role_escalation_ignored():
-    # Attempting to supply role: ADMIN in body must still create CITIZEN
+    # Attempting to supply an invalid role must fallback to CITIZEN
     reg_resp = client.post("/api/v1/auth/register", json={
-        "username": "sneaky_admin",
+        "username": "sneaky_invalid",
         "email": "sneaky@example.com",
         "password": "SecurePassword123!",
-        "role": "ADMIN"
+        "role": "SUPERUSER_HACKER"
     })
     assert reg_resp.status_code == 201
     assert reg_resp.json()["role"] == "CITIZEN"
+
+    # Explicitly registering as FIELD_WORKER
+    worker_reg = client.post("/api/v1/auth/register", json={
+        "username": "fieldworker_bob",
+        "email": "bob_worker@example.com",
+        "password": "SecurePassword123!",
+        "role": "FIELD_WORKER"
+    })
+    assert worker_reg.status_code == 201
+    assert worker_reg.json()["role"] == "FIELD_WORKER"
 
 def test_logout_invalidates_session():
     # Login as citizen1

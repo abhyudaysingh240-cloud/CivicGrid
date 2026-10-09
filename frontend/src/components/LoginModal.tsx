@@ -10,6 +10,7 @@ interface LoginModalProps {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) => {
   const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [selectedRole, setSelectedRole] = useState<'CITIZEN' | 'FIELD_WORKER' | 'ADMIN'>('CITIZEN');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,13 +33,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
         });
         onSuccess(user);
       } else {
-        // Register flow
+        // Register flow with selected role
         await apiRequest<User>('/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             username: username,
             email: email,
             password: password,
+            role: selectedRole,
           }),
         });
         // Auto-login after registration
@@ -68,9 +70,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-100">
-                {tab === 'login' ? 'Sign In to CivicGrid' : 'Create Citizen Account'}
+                {tab === 'login' ? 'Sign In to CivicGrid' : 'Register New Account'}
               </h2>
-              <p className="text-[11px] text-slate-400">Secure HTTP-only cookie authentication</p>
+              <p className="text-[11px] text-slate-400">Role-based authenticated workspace</p>
             </div>
           </div>
           <button
@@ -82,7 +84,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
           </button>
         </div>
 
-        {/* Tab Selector */}
+        {/* Tab Selector: Sign In vs Register */}
         <div className="flex rounded-xl bg-charcoal-800 p-1 border border-charcoal-700">
           <button
             type="button"
@@ -106,6 +108,34 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
           >
             Register
           </button>
+        </div>
+
+        {/* Role Selector */}
+        <div>
+          <label className="block text-xs font-mono text-slate-300 mb-1.5">
+            SELECT ROLE
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { role: 'CITIZEN' as const, label: 'Citizen', desc: 'Public portal' },
+              { role: 'FIELD_WORKER' as const, label: 'Worker', desc: 'Field staff' },
+              { role: 'ADMIN' as const, label: 'Admin', desc: 'Management' },
+            ].map(({ role, label, desc }) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setSelectedRole(role)}
+                className={`p-2 rounded-xl text-left border transition-all ${
+                  selectedRole === role
+                    ? 'bg-electric-500/20 border-electric-400 text-slate-100 shadow-sm'
+                    : 'bg-charcoal-800 border-charcoal-700 text-slate-400 hover:text-slate-200 hover:border-charcoal-600'
+                }`}
+              >
+                <div className="text-xs font-bold font-mono">{label}</div>
+                <div className="text-[10px] text-slate-400">{desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (
@@ -167,7 +197,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
             disabled={loading}
             className="w-full py-2.5 rounded-xl text-xs font-mono font-bold bg-electric-500 hover:bg-electric-400 text-white transition-all shadow-md disabled:opacity-50"
           >
-            {loading ? (tab === 'login' ? 'Authenticating...' : 'Registering...') : (tab === 'login' ? 'Sign In' : 'Create Account')}
+            {loading ? (tab === 'login' ? 'Authenticating...' : 'Registering...') : (tab === 'login' ? 'Sign In' : `Create ${selectedRole === 'CITIZEN' ? 'Citizen' : selectedRole === 'FIELD_WORKER' ? 'Worker' : 'Admin'} Account`)}
           </button>
         </form>
       </div>

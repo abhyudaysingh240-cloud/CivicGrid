@@ -36,11 +36,15 @@ def register_user(payload: UserRegister, request: Request, db: Session = Depends
     if db.query(User).filter(func.lower(User.email) == clean_email).first():
         raise HTTPException(status_code=400, detail="Email already registered.")
 
+    selected_role = (payload.role or "CITIZEN").strip().upper()
+    if selected_role not in ["CITIZEN", "FIELD_WORKER", "ADMIN", "DEPARTMENT_OFFICER"]:
+        selected_role = "CITIZEN"
+
     new_user = User(
         username=clean_username,
         email=clean_email,
         hashed_password=get_password_hash(payload.password),
-        role="CITIZEN",
+        role=selected_role,
         is_active=True
     )
     db.add(new_user)

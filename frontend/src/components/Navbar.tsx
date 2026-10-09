@@ -76,18 +76,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <UserIcon className="w-4 h-4 text-[var(--espresso)]" />
                 </div>
                 <div className="text-left hidden sm:block">
-                  <div className={`text-sm font-semibold leading-none ${textPrimary}`}>{currentUser.username}</div>
-                  <div className={`text-xs mt-0.5 ${textMuted}`}>{roleLabels[activeRole]}</div>
+                  <div className={`text-sm font-semibold leading-none ${textPrimary}`}>
+                    {currentUser.username} <span className="font-normal opacity-70">|</span> <span className="text-xs font-mono font-bold">{roleLabels[currentUser.role] || currentUser.role}</span>
+                  </div>
+                  <div className={`text-xs mt-0.5 ${textMuted}`}>{currentUser.email}</div>
                 </div>
-                <span className={`badge ${roleColors[activeRole]} hidden sm:inline-flex`}>
-                  {roleLabels[activeRole]}
+                <span className={`badge ${roleColors[currentUser.role] || 'badge-sage'} hidden sm:inline-flex`}>
+                  {roleLabels[currentUser.role] || currentUser.role}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${menuOpen ? 'rotate-180' : ''} ${textMuted}`} />
               </button>
 
               {menuOpen && (
                 <div
-                  className={`absolute right-0 top-full mt-1 w-52 rounded-lg shadow-lg border ${
+                  className={`absolute right-0 top-full mt-1 w-60 rounded-lg shadow-lg border ${
                     isGrid
                       ? 'bg-[var(--surface-dark-1)] border-[var(--border-dark)]'
                       : 'bg-white border-[var(--stone-border)]'
@@ -95,8 +97,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   role="menu"
                   onBlur={() => setMenuOpen(false)}
                 >
-                  <div className={`px-4 py-2 border-b ${isGrid ? 'border-[var(--border-dark)]' : 'border-[var(--stone-border)]'}`}>
-                    <p className={`text-xs font-semibold ${textPrimary}`}>{currentUser.username}</p>
+                  <div className={`px-4 py-2.5 border-b ${isGrid ? 'border-[var(--border-dark)]' : 'border-[var(--stone-border)]'}`}>
+                    <p className={`text-xs font-bold ${textPrimary}`}>{currentUser.username} | {roleLabels[currentUser.role] || currentUser.role}</p>
                     <p className={`text-[11px] ${textMuted}`}>{currentUser.email}</p>
                   </div>
                   <button
