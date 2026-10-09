@@ -7,9 +7,17 @@ from backend.app.core.database import get_db
 from backend.app.core.dependencies import get_current_user, require_role, verify_csrf
 from backend.app.core.audit import log_audit_event
 from backend.app.models.models import User, Assignment, CitizenReport, IncidentCluster
-from backend.app.schemas.schemas import AssignmentCreate, AssignmentOut, AssignmentStatusUpdate
+from backend.app.schemas.schemas import AssignmentCreate, AssignmentOut, AssignmentStatusUpdate, UserOut
 
 router = APIRouter(prefix="/civic/assignments", tags=["Field Assignments"])
+
+@router.get("/workers", response_model=List[UserOut])
+def list_field_workers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("DEPARTMENT_OFFICER", "ADMIN"))
+):
+    return db.query(User).filter(User.role == "FIELD_WORKER", User.is_active == True).all()
+
 
 @router.post("", response_model=AssignmentOut, status_code=status.HTTP_201_CREATED)
 def create_assignment(

@@ -29,13 +29,13 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({
       apiRequest<CitizenReport[]>('/civic/reports'),
       apiRequest<IncidentCluster[]>('/civic/clusters'),
       apiRequest<InfrastructureAsset[]>('/civic/assets'),
-      apiRequest<User[]>('/admin/users').catch(() => []),
+      apiRequest<User[]>('/civic/assignments/workers').catch(() => []),
     ])
       .then(([reps, cls, asts, usrs]) => {
         setReports(reps);
         setClusters(cls);
         setAssets(asts);
-        setWorkers(usrs.filter((u) => u.role === 'FIELD_WORKER'));
+        setWorkers(usrs);
       })
       .finally(() => setLoading(false));
   };

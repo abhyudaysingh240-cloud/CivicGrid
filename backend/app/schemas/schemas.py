@@ -271,3 +271,22 @@ class AuditLogOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# --- Department & System Health Schemas ---
+class DepartmentOut(BaseModel):
+    id: int
+    code: str
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class SystemHealthOut(BaseModel):
+    status: str
+    db_connected: bool
+    total_users: int
+    total_reports: int
+    total_assets: int
+    active_grid_state: str
+    timestamp: datetime
+

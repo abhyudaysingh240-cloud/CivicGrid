@@ -185,3 +185,20 @@ export interface AuditLog {
   ip_address?: string;
   metadata_json?: any;
 }
+
+export interface Department {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface SystemHealth {
+  status: string;
+  db_connected: boolean;
+  total_users: number;
+  total_reports: number;
+  total_assets: number;
+  active_grid_state: string;
+  timestamp: string;
+}
+

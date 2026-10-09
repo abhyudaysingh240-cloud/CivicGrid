@@ -220,3 +220,192 @@ def test_audit_logging():
     logs = db.query(AuditLog).all()
     assert len(logs) > 0
     db.close()
+
+def test_field_worker_assignments_and_idor():
+    # 1. Login as operator1 (DEPARTMENT_OFFICER)
+    op_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "operator1",
+        "password": "OperatorPassword123!"
+    })
+    op_cookies = op_login.cookies
+    csrf_token = op_cookies.get("civicgrid_csrf_token", "")
+
+    # Officer lists workers
+    workers_resp = client.get("/api/v1/civic/assignments/workers", cookies=op_cookies)
+    assert workers_resp.status_code == 200
+    workers = workers_resp.json()
+    assert any(w["username"] == "worker1" for w in workers)
+    worker1_id = next(w["id"] for w in workers if w["username"] == "worker1")
+
+    # Officer creates an assignment
+    assign_resp = client.post(
+        "/api/v1/civic/assignments",
+        json={"assigned_to_user_id": worker1_id, "notes": "Check transformer T-1"},
+        cookies=op_cookies,
+        headers={"X-CSRF-Token": csrf_token}
+    )
+    assert assign_resp.status_code == 201
+    assignment_id = assign_resp.json()["id"]
+
+    # 2. Login as worker1
+    w1_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "worker1",
+        "password": "WorkerPassword123!"
+    })
+    w1_cookies = w1_login.cookies
+    w1_csrf = w1_cookies.get("civicgrid_csrf_token", "")
+
+    # Worker1 fetches their assignments
+    my_resp = client.get("/api/v1/civic/assignments/my", cookies=w1_cookies)
+    assert my_resp.status_code == 200
+    my_tasks = my_resp.json()
+    assert any(t["id"] == assignment_id for t in my_tasks)
+
+    # Worker1 updates status to EN_ROUTE then COMPLETED
+    status_resp = client.patch(
+        f"/api/v1/civic/assignments/{assignment_id}/status",
+        json={"status": "EN_ROUTE"},
+        cookies=w1_cookies,
+        headers={"X-CSRF-Token": w1_csrf}
+    )
+    assert status_resp.status_code == 200
+    assert status_resp.json()["status"] == "EN_ROUTE"
+
+    # 3. Create another worker (worker2) and test IDOR
+    db = TestingSession()
+    from backend.app.core.security import get_password_hash
+    worker2 = User(
+        username="worker2",
+        email="worker2@example.com",
+        hashed_password=get_password_hash("Worker2Password123!"),
+        role="FIELD_WORKER",
+        is_active=True
+    )
+    db.add(worker2)
+    db.commit()
+    db.close()
+
+    w2_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "worker2",
+        "password": "Worker2Password123!"
+    })
+    w2_cookies = w2_login.cookies
+    w2_csrf = w2_cookies.get("civicgrid_csrf_token", "")
+
+    # Worker2 attempts to mutate Worker1's assignment -> Must be 403 Forbidden (IDOR)
+    idor_resp = client.patch(
+        f"/api/v1/civic/assignments/{assignment_id}/status",
+        json={"status": "COMPLETED"},
+        cookies=w2_cookies,
+        headers={"X-CSRF-Token": w2_csrf}
+    )
+    assert idor_resp.status_code == 403
+    assert "Forbidden" in idor_resp.json()["detail"]
+
+    # 4. Citizen attempting to access worker endpoints -> 403
+    cit_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "citizen1",
+        "password": "CitizenPassword123!"
+    })
+    assert client.get("/api/v1/civic/assignments/my", cookies=cit_login.cookies).status_code == 403
+    assert client.get("/api/v1/civic/assignments/workers", cookies=cit_login.cookies).status_code == 403
+
+def test_admin_system_health_and_role_management():
+    # 1. Login as admin
+    adm_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "admin",
+        "password": "AdminPassword123!"
+    })
+    adm_cookies = adm_login.cookies
+    adm_csrf = adm_cookies.get("civicgrid_csrf_token", "")
+
+    # Admin fetches system health
+    health_resp = client.get("/api/v1/admin/system-health", cookies=adm_cookies)
+    assert health_resp.status_code == 200
+    health_data = health_resp.json()
+    assert health_data["db_connected"] is True
+    assert health_data["total_users"] > 0
+    assert "active_grid_state" in health_data
+
+    # Admin fetches departments
+    depts_resp = client.get("/api/v1/admin/departments", cookies=adm_cookies)
+    assert depts_resp.status_code == 200
+    assert len(depts_resp.json()) > 0
+
+    # Admin lists users
+    users_resp = client.get("/api/v1/admin/users", cookies=adm_cookies)
+    assert users_resp.status_code == 200
+    users = users_resp.json()
+    target_user = next(u for u in users if u["username"] == "citizen1")
+
+    # Admin updates user role
+    role_resp = client.patch(
+        f"/api/v1/admin/users/{target_user['id']}/role",
+        json={"role": "FIELD_WORKER"},
+        cookies=adm_cookies,
+        headers={"X-CSRF-Token": adm_csrf}
+    )
+    assert role_resp.status_code == 200
+    assert role_resp.json()["role"] == "FIELD_WORKER"
+
+    # 2. Non-admin access control
+    cit_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "operator1",
+        "password": "OperatorPassword123!"
+    })
+    assert client.get("/api/v1/admin/system-health", cookies=cit_login.cookies).status_code == 403
+    assert client.get("/api/v1/admin/users", cookies=cit_login.cookies).status_code == 403
+
+def test_citizen_report_submission_and_isolation():
+    # 1. Login as citizen1
+    c1_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "citizen1",
+        "password": "CitizenPassword123!"
+    })
+    c1_cookies = c1_login.cookies
+    c1_csrf = c1_cookies.get("civicgrid_csrf_token", "")
+
+    # Submit a citizen report
+    rep_resp = client.post(
+        "/api/v1/civic/reports",
+        data={"description": "Large water leak near Main St pump station", "severity": "3"},
+        cookies=c1_cookies,
+        headers={"X-CSRF-Token": c1_csrf}
+    )
+    assert rep_resp.status_code == 201
+    c1_report_id = rep_resp.json()["id"]
+
+    # Citizen1 sees own report in list
+    c1_list = client.get("/api/v1/civic/reports", cookies=c1_cookies).json()
+    assert any(r["id"] == c1_report_id for r in c1_list)
+
+    # 2. Register new citizen2
+    client.post("/api/v1/auth/register", json={
+        "username": "citizen2",
+        "email": "citizen2@example.com",
+        "password": "Citizen2Password123!"
+    })
+    c2_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "citizen2",
+        "password": "Citizen2Password123!"
+    })
+    c2_cookies = c2_login.cookies
+
+    # Citizen2 list reports -> Should NOT contain citizen1's report
+    c2_list = client.get("/api/v1/civic/reports", cookies=c2_cookies).json()
+    assert not any(r["id"] == c1_report_id for r in c2_list)
+
+    # Citizen2 direct fetch of Citizen1's report -> 403 Forbidden (IDOR)
+    idor_rep = client.get(f"/api/v1/civic/reports/{c1_report_id}", cookies=c2_cookies)
+    assert idor_rep.status_code == 403
+    assert "Forbidden" in idor_rep.json()["detail"]
+
+    # 3. Officer has full operational visibility
+    op_login = client.post("/api/v1/auth/login", json={
+        "username_or_email": "operator1",
+        "password": "OperatorPassword123!"
+    })
+    op_rep = client.get(f"/api/v1/civic/reports/{c1_report_id}", cookies=op_login.cookies)
+    assert op_rep.status_code == 200
+    assert op_rep.json()["id"] == c1_report_id
+

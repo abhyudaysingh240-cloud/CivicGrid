@@ -110,4 +110,16 @@ This log documents every architectural decision, alternatives considered, trade-
   4. *Accessibility*: Added `prefers-reduced-motion` overrides, high contrast support tokens, accessible font scaling classes (`citizen-font-sm/md/lg`), and minimum 48px touch targets.
 - **Trade-off / Justification**: Avoids fragmented stylesheets and external router dependencies; unifies the user experience while respecting WCAG AA accessibility standards.
 
+---
+
+### DEC-009: Operational Role Dashboards, Field Worker Dispatches, System Health & IDOR Isolation (Session C)
+- **Context**: The four user personas (Citizen, Field Worker, Department Officer, System Admin) required end-to-end operational workflows connecting frontend UI directly to live database state with zero mocked/fabricated statistics, strict IDOR protection, and field worker dispatch lifecycle management.
+- **Decision**:
+  1. *Worker & Officer Dispatches*: Added `GET /api/v1/civic/assignments/workers` for Officers and Admins to inspect available active field crews. Added `GET /api/v1/civic/assignments/my` and `PATCH /api/v1/civic/assignments/{id}/status` allowing assigned workers to update state (`EN_ROUTE`, `ON_SITE`, `COMPLETED`) with field notes. Enforced IDOR bounds ensuring workers cannot mutate another worker's assignments (HTTP 403).
+  2. *Citizen Report Isolation*: Enforced strict IDOR protection on `GET /api/v1/civic/reports` and `GET /api/v1/civic/reports/{id}`, ensuring citizens only view reports they submitted, while Officers and Admins maintain full department visibility.
+  3. *Admin System Health & Department Telemetry*: Added `GET /api/v1/admin/system-health` and `GET /api/v1/admin/departments`, wired into `AdminDashboard.tsx` to provide live DB connection status, active grid state, user counts, incident metrics, and role management.
+  4. *Zero Fabricated Data*: All dashboard statistics, maps, tables, and metrics are derived strictly from database queries and algorithm outputs; zero hardcoded fake metrics.
+- **Trade-off / Justification**: Fully fulfills operational workflows with mathematically verifiable telemetry and robust multi-tenant authorization guards.
+
+
 

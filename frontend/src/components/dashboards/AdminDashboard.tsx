@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { AuditLog, User } from '../../types';
+import { AuditLog, User, SystemHealth } from '../../types';
 import { apiRequest } from '../../api/client';
-import { Shield, Key, Search, Users, Activity } from 'lucide-react';
+import { Shield, Key, Search, Users, Activity, Database, Server, Radio } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [filterAction, setFilterAction] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,10 +15,12 @@ export const AdminDashboard: React.FC = () => {
     Promise.all([
       apiRequest<AuditLog[]>('/admin/audit-logs'),
       apiRequest<User[]>('/admin/users'),
+      apiRequest<SystemHealth>('/admin/system-health').catch(() => null),
     ])
-      .then(([l, u]) => {
+      .then(([l, u, h]) => {
         setLogs(l);
         setUsers(u);
+        setHealth(h);
       })
       .finally(() => setLoading(false));
   };
@@ -45,6 +48,52 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* System Health Status Cards */}
+      {health && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Database Status</span>
+            </div>
+            <div className="text-lg font-bold font-mono text-emerald-400 mt-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              {health.db_connected ? 'CONNECTED' : 'OFFLINE'}
+            </div>
+          </div>
+
+          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
+              <Users className="w-4 h-4 text-electric-400" />
+              <span>Total System Users</span>
+            </div>
+            <div className="text-2xl font-bold font-mono text-slate-100 mt-2">
+              {health.total_users}
+            </div>
+          </div>
+
+          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
+              <Activity className="w-4 h-4 text-amber-400" />
+              <span>Citizen Reports</span>
+            </div>
+            <div className="text-2xl font-bold font-mono text-slate-100 mt-2">
+              {health.total_reports}
+            </div>
+          </div>
+
+          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
+              <Radio className="w-4 h-4 text-electric-400" />
+              <span>Active Grid State</span>
+            </div>
+            <div className="text-sm font-bold font-mono text-electric-400 mt-2 truncate">
+              {health.active_grid_state}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* User Management Section */}
       <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-5 shadow-xl space-y-4">
         <div className="flex items-center gap-2">
