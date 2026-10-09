@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from backend.app.core.database import get_db
 from backend.app.core.config import settings
@@ -26,15 +27,18 @@ def get_csrf_token(response: Response):
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_user(payload: UserRegister, request: Request, db: Session = Depends(get_db)):
-    # Check duplicate username or email
-    if db.query(User).filter(User.username == payload.username).first():
+    clean_username = payload.username.strip()
+    clean_email = payload.email.strip().lower()
+
+    # Check duplicate username or email (case-insensitive)
+    if db.query(User).filter(func.lower(User.username) == clean_username.lower()).first():
         raise HTTPException(status_code=400, detail="Username already registered.")
-    if db.query(User).filter(User.email == payload.email).first():
+    if db.query(User).filter(func.lower(User.email) == clean_email).first():
         raise HTTPException(status_code=400, detail="Email already registered.")
 
     new_user = User(
-        username=payload.username,
-        email=payload.email,
+        username=clean_username,
+        email=clean_email,
         hashed_password=get_password_hash(payload.password),
         role="CITIZEN",
         is_active=True
@@ -86,9 +90,11 @@ def login_user(payload: UserLogin, request: Request, response: Response, db: Ses
     ip = request.client.host if request.client else "unknown"
     _check_rate_limit(ip)
 
-    # Find user by username or email
+    identifier = payload.username_or_email.strip()
+
+    # Find user by username or email (case-insensitive)
     user = db.query(User).filter(
-        (User.username == payload.username_or_email) | (User.email == payload.username_or_email)
+        (func.lower(User.username) == identifier.lower()) | (func.lower(User.email) == identifier.lower())
     ).first()
 
     if not user or not verify_password(payload.password, user.hashed_password):
@@ -98,7 +104,7 @@ def login_user(payload: UserLogin, request: Request, response: Response, db: Ses
             actor=user,
             action="LOGIN_ATTEMPT",
             resource_type="user",
-            resource_id=payload.username_or_email,
+            resource_id=identifier,
             result="DENIED",
             ip_address=ip
         )

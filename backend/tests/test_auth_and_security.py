@@ -409,3 +409,64 @@ def test_citizen_report_submission_and_isolation():
     assert op_rep.status_code == 200
     assert op_rep.json()["id"] == c1_report_id
 
+def test_login_case_insensitivity_and_whitespace():
+    # 1. Login with uppercase username
+    resp1 = client.post("/api/v1/auth/login", json={
+        "username_or_email": "ADMIN",
+        "password": "AdminPassword123!"
+    })
+    assert resp1.status_code == 200
+    assert resp1.json()["username"] == "admin"
+
+    # 2. Login with uppercase / mixed-case email
+    resp2 = client.post("/api/v1/auth/login", json={
+        "username_or_email": "Operator@CivicGrid.Internal",
+        "password": "OperatorPassword123!"
+    })
+    assert resp2.status_code == 200
+    assert resp2.json()["username"] == "operator1"
+
+    # 3. Login with whitespace padding
+    resp3 = client.post("/api/v1/auth/login", json={
+        "username_or_email": "  worker1  ",
+        "password": "WorkerPassword123!"
+    })
+    assert resp3.status_code == 200
+    assert resp3.json()["username"] == "worker1"
+
+    # 4. Unknown user returns generic error
+    resp4 = client.post("/api/v1/auth/login", json={
+        "username_or_email": "nonexistent_citizen_xyz",
+        "password": "SomePassword123!"
+    })
+    assert resp4.status_code == 401
+    assert "Invalid username or password" in resp4.json()["detail"]
+
+def test_unauthenticated_citizen_report_submission_and_validation():
+    # 1. Guest submits report without session cookies
+    rep_resp = client.post(
+        "/api/v1/civic/reports",
+        data={
+            "description": "Streetlight flickering on Elm St intersection",
+            "category": "streetlight",
+            "severity": "2",
+            "latitude": "12.9716",
+            "longitude": "77.5946"
+        }
+    )
+    assert rep_resp.status_code == 201
+    rep_data = rep_resp.json()
+    assert rep_data["id"] > 0
+    assert rep_data["category"] == "streetlight"
+    assert rep_data["x_coord"] == 12.9716
+    assert rep_data["y_coord"] == 77.5946
+
+    # 2. Validation error on short description
+    short_resp = client.post(
+        "/api/v1/civic/reports",
+        data={"description": "fix", "severity": "1"}
+    )
+    assert short_resp.status_code == 400
+    assert "at least 5 characters" in short_resp.json()["detail"]
+
+

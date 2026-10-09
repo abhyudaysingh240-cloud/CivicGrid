@@ -54,6 +54,39 @@ async def get_current_user(
     return user
 
 
+async def get_optional_current_user(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Extracts JWT from HTTP-only cookie, or fallback Authorization Bearer header if present.
+    Returns User if valid session exists, otherwise None (allowing guest operations).
+    """
+    token: Optional[str] = request.cookies.get(settings.COOKIE_NAME)
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            
+    if not token:
+        return None
+        
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        return None
+        
+    try:
+        user_id = int(payload["sub"])
+    except (ValueError, TypeError):
+        return None
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active:
+        return None
+        
+    return user
+
+
 def require_role(*allowed_roles: str):
     """
     Server-side Role-Based Access Control (RBAC) dependency guard.

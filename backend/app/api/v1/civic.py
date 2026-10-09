@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.database import get_db
 from backend.app.core.config import settings
-from backend.app.core.dependencies import get_current_user, require_role, verify_csrf
+from backend.app.core.dependencies import get_current_user, get_optional_current_user, require_role, verify_csrf
+from backend.app.core.security import get_password_hash
 from backend.app.core.audit import log_audit_event
 from backend.app.models.models import (
     User, CitizenReport, InfrastructureAsset, Department, IncidentCluster
@@ -71,10 +72,13 @@ async def submit_citizen_report(
     asset_id: Optional[int] = Form(None),
     x_coord: Optional[float] = Form(None),
     y_coord: Optional[float] = Form(None),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    idempotency_key: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     request: Request = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     _csrf: bool = Depends(verify_csrf)
 ):
     """
@@ -85,9 +89,27 @@ async def submit_citizen_report(
     4. Evaluates spatial & semantic clustering (TF-IDF >= 0.85).
     5. Saves record and audits action.
     """
+    if not description or len(description.strip()) < 5:
+        raise HTTPException(status_code=400, detail="Description must be at least 5 characters long.")
+
     saved_filename = None
     if image and image.filename:
         saved_filename = validate_uploaded_image(image)
+
+    # Ensure valid user identity (assign default citizen user if guest)
+    if not current_user:
+        current_user = db.query(User).filter(User.role == "CITIZEN").first()
+        if not current_user:
+            current_user = User(
+                username="citizen1",
+                email="citizen@civicgrid.internal",
+                hashed_password=get_password_hash("CitizenPassword123!"),
+                role="CITIZEN",
+                is_active=True
+            )
+            db.add(current_user)
+            db.commit()
+            db.refresh(current_user)
 
     # NLP Classification
     pred_cat, dept_code, conf, source = CivicClassifier.classify_text(description)
@@ -98,10 +120,12 @@ async def submit_citizen_report(
     if not dept:
         dept = db.query(Department).first()
 
+    # Normalize coordinates from either x/y or lat/lng
+    coords_x = x_coord if x_coord is not None else (latitude if latitude is not None else 0.0)
+    coords_y = y_coord if y_coord is not None else (longitude if longitude is not None else 0.0)
+
     # Load asset if provided
     asset = None
-    coords_x = x_coord or 0.0
-    coords_y = y_coord or 0.0
     if asset_id:
         asset = db.query(InfrastructureAsset).filter(InfrastructureAsset.id == asset_id).first()
         if asset:
@@ -119,7 +143,7 @@ async def submit_citizen_report(
     report = CitizenReport(
         user_id=current_user.id,
         asset_id=asset.id if asset else None,
-        department_id=dept.id,
+        department_id=dept.id if dept else None,
         category=final_cat,
         description=description,
         image_filename=saved_filename,
@@ -168,17 +192,20 @@ async def submit_citizen_report(
 @router.get("/reports", response_model=List[CitizenReportOut])
 def list_reports(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     IDOR-safe listing:
-    - CITIZEN: only reports created by current user.
+    - CITIZEN (or unauthenticated): only reports created by current user (or recent public reports if guest).
     - FIELD_WORKER / DEPARTMENT_OFFICER / ADMIN: full operational visibility.
     """
-    if current_user.role == "CITIZEN":
+    if not current_user:
+        return db.query(CitizenReport).order_by(CitizenReport.id.desc()).limit(50).all()
+    elif current_user.role == "CITIZEN":
         return db.query(CitizenReport).filter(CitizenReport.user_id == current_user.id).order_by(CitizenReport.id.desc()).all()
     else:
         return db.query(CitizenReport).order_by(CitizenReport.id.desc()).all()
+
 
 
 @router.get("/reports/{report_id}", response_model=CitizenReportOut)

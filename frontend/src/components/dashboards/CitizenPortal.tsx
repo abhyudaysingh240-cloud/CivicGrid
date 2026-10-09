@@ -46,6 +46,39 @@ function makeIdempotencyKey() {
   return `cg-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
 }
 
+/* ─── Data Quality & Category Consistency Check ─── */
+interface ConsistencyCheck {
+  inconsistent: boolean;
+  keyword?: string;
+  suggestion?: string;
+}
+
+function checkCategoryConsistency(cat: string, desc: string): ConsistencyCheck {
+  const text = desc.toLowerCase();
+  const patterns: Record<string, { keywords: string[]; label: string }> = {
+    pothole: { keywords: ['pothole', 'road damage', 'crater', 'asphalt', 'pavement broken', 'uneven road', 'tarmac'], label: 'Pothole / Road Damage' },
+    streetlight: { keywords: ['streetlight', 'street light', 'lamp post', 'dark street', 'pole light', 'flickering light', 'no light'], label: 'Streetlight Issue' },
+    water: { keywords: ['water leak', 'pipe burst', 'drainage', 'sewage', 'flooding', 'overflowing pipe', 'water main'], label: 'Water Leakage' },
+    electrical: { keywords: ['electrical', 'spark', 'sparks', 'live wire', 'transformer', 'power line', 'short circuit', 'exposed wire'], label: 'Electrical / Cable' },
+    garbage: { keywords: ['garbage', 'trash', 'waste', 'dump', 'litter', 'rubbish', 'dustbin overflow'], label: 'Garbage / Waste' },
+  };
+
+  for (const [key, cfg] of Object.entries(patterns)) {
+    if (key !== cat) {
+      for (const kw of cfg.keywords) {
+        if (text.includes(kw)) {
+          return {
+            inconsistent: true,
+            keyword: kw,
+            suggestion: cfg.label,
+          };
+        }
+      }
+    }
+  }
+  return { inconsistent: false };
+}
+
 interface CitizenPortalProps {
   assets: InfrastructureAsset[];
   onReportCreated: () => void;
@@ -173,29 +206,43 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
 
   /* ── Submit ── */
   const handleSubmit = async () => {
-    if (!description.trim()) { toast('error', 'Please describe the problem.'); return; }
+    if (!description.trim() || description.trim().length < 5) {
+      toast('error', 'Please describe the problem with at least 5 characters.');
+      return;
+    }
+    if (submitting) return;
     setSubmitting(true);
     const fd = new FormData();
-    fd.append('description', description);
-    fd.append('category', category);
+    fd.append('description', description.trim());
+    if (category) fd.append('category', category);
     fd.append('severity', String(severity));
     if (assetId) fd.append('asset_id', assetId);
-    if (latitude != null) fd.append('latitude', String(latitude));
-    if (longitude != null) fd.append('longitude', String(longitude));
+    if (latitude != null) {
+      fd.append('x_coord', String(latitude));
+      fd.append('latitude', String(latitude));
+    }
+    if (longitude != null) {
+      fd.append('y_coord', String(longitude));
+      fd.append('longitude', String(longitude));
+    }
     if (imageFile) fd.append('image', imageFile);
     fd.append('idempotency_key', idempotencyKey.current);
+
     try {
       const created = await apiRequest<CitizenReport>('/civic/reports', { method: 'POST', body: fd });
       setCreatedReport(created);
+      setReports(prev => [created, ...prev.filter(r => r.id !== created.id)]);
       setStep('done');
       onReportCreated();
       idempotencyKey.current = makeIdempotencyKey(); // reset for next report
+      toast('success', `Report #${created.id} submitted successfully!`);
     } catch (err: any) {
-      toast('error', err.message || 'Submission failed. Please try again.');
+      toast('error', err.message || 'Submission failed. Please check your information and try again.');
     } finally {
       setSubmitting(false);
     }
   };
+
 
   /* ── Reset stepper ── */
   const resetForm = () => {
@@ -547,26 +594,46 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
               )}
 
               {/* STEP 5: Review */}
-              {step === 'review' && (
-                <div>
-                  <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Review and submit</h2>
-                  <p className="text-[var(--text-muted)] text-sm mb-6">Please check your report before submitting.</p>
-                  <dl className="space-y-3">
-                    {[
-                      { dt: 'Problem type', dd: CATEGORIES.find(c => c.key === category)?.label || category },
-                      { dt: 'Description', dd: description },
-                      { dt: 'Severity', dd: `${severity}/5 – ${SEVERITY_LABELS[severity]}` },
-                      { dt: 'Location', dd: locationLabel || (assetId ? `Asset #${assetId}` : 'No location recorded') },
-                      { dt: 'Photo', dd: imageFile ? imageFile.name : 'No photo attached' },
-                    ].map(({ dt, dd }) => (
-                      <div key={dt} className="flex flex-col sm:flex-row sm:gap-4">
-                        <dt className="text-sm font-semibold text-[var(--text-secondary)] w-36 shrink-0">{dt}</dt>
-                        <dd className="text-sm text-[var(--text-primary)] mt-0.5 sm:mt-0">{dd}</dd>
+              {step === 'review' && (() => {
+                const consistency = checkCategoryConsistency(category, description);
+                return (
+                  <div>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Review and submit</h2>
+                    <p className="text-[var(--text-muted)] text-sm mb-4">Please check your report details before submitting.</p>
+
+                    {consistency.inconsistent && (
+                      <div className="mb-5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-2.5" role="alert">
+                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold text-amber-900 dark:text-amber-100">Category Consistency Notice</p>
+                          <p className="text-amber-800 dark:text-amber-300">
+                            Your description mentions <em>"{consistency.keyword}"</em>, which usually corresponds to <strong>{consistency.suggestion}</strong>, but <strong>{CATEGORIES.find(c => c.key === category)?.label || category}</strong> is currently selected.
+                          </p>
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                            You can proceed with your report as-is, or click <strong>Back</strong> to adjust the problem type.
+                          </p>
+                        </div>
                       </div>
-                    ))}
-                  </dl>
-                </div>
-              )}
+                    )}
+
+                    <dl className="space-y-3">
+                      {[
+                        { dt: 'Problem type', dd: CATEGORIES.find(c => c.key === category)?.label || category },
+                        { dt: 'Description', dd: description },
+                        { dt: 'Severity', dd: `${severity}/5 – ${SEVERITY_LABELS[severity]}` },
+                        { dt: 'Location', dd: locationLabel || (assetId ? `Asset #${assetId}` : 'No location recorded') },
+                        { dt: 'Photo', dd: imageFile ? imageFile.name : 'No photo attached' },
+                      ].map(({ dt, dd }) => (
+                        <div key={dt} className="flex flex-col sm:flex-row sm:gap-4">
+                          <dt className="text-sm font-semibold text-[var(--text-secondary)] w-36 shrink-0">{dt}</dt>
+                          <dd className="text-sm text-[var(--text-primary)] mt-0.5 sm:mt-0">{dd}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })()}
+
 
               {/* Nav buttons */}
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--stone-border)] gap-3">

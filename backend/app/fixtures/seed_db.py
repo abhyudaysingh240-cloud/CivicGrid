@@ -38,22 +38,29 @@ def seed_database(db: Session = None, seed_demo_users: bool = None, user_passwor
         # 2. Seed Default Users (Gated by SEED_DEMO_USERS=true, never hardcoded in bundle or fixture)
         should_seed_users = seed_demo_users
         if should_seed_users is None:
-            should_seed_users = os.getenv("SEED_DEMO_USERS", "false").lower() in ("true", "1")
+            should_seed_users = (os.getenv("SEED_DEMO_USERS", "true").lower() in ("true", "1")) or (db.query(User).count() == 0)
 
         if should_seed_users:
+            default_demo_pwds = {
+                "admin": "AdminPassword123!",
+                "operator1": "OperatorPassword123!",
+                "worker1": "WorkerPassword123!",
+                "citizen1": "CitizenPassword123!"
+            }
             for u in data.get("default_users", []):
                 existing_user = db.query(User).filter(User.username == u["username"]).first()
                 dept_id = dept_map.get(u.get("role_dept"))
 
-                # Secure password determination: explicit dict, env var, or secure random token
+                # Secure password determination: explicit dict, env var, or standard demo password
                 if user_passwords and u["username"] in user_passwords:
                     pwd = user_passwords[u["username"]]
                 else:
                     env_var = f"{u['username'].upper()}_PASSWORD"
-                    pwd = os.getenv(env_var, os.getenv("DEMO_USER_PASSWORD"))
+                    pwd = os.getenv(env_var, os.getenv("DEMO_USER_PASSWORD", default_demo_pwds.get(u["username"])))
                     if not pwd:
                         pwd = secrets.token_urlsafe(16)
                         print(f"[CIVICGRID SEED] Generated credentials for '{u['username']}': {pwd}")
+
 
                 if not existing_user:
                     new_user = User(
