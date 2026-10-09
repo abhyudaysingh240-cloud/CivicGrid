@@ -1,0 +1,56 @@
+:root {
+  /* Surfaces (dark command center) */
+  --bg-base: #0A0E14;
+  --surface-1: #0F1520;
+  --surface-2: #151C2A;
+  --surface-3: #1C2535;
+  --border-subtle: #232D3F;
+  --border-strong: #2F3B52;
+
+  /* Typography Colors */
+  --text-primary: #E6EBF2;
+  --text-secondary: #9AA7BA;
+  --text-muted: #6B7A90;
+
+  /* Brand / Accent */
+  --primary: #3B82F6;
+  --primary-hover: #2F6FE0;
+  --accent-cyan: #22D3EE;
+
+  /* Operational Status Colors */
+  --status-healthy: #10B981;
+  --status-warning: #F59E0B;
+  --status-degraded: #FB923C;
+  --status-faulted: #EF4444;
+  --status-critical: #DC2626;
+  --status-restored: #2DD4BF;
+  --status-open-tie: #64748B;
+  --status-unavailable: #475569;
+  --status-info: #38BDF8;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Border Radii */
+  --radius-input: 6px;
+  --radius-card: 10px;
+  --radius-modal: 14px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
