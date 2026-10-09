@@ -157,10 +157,11 @@ export interface Assignment {
   assigned_to_user_id: number;
   assigned_to_username?: string;
   assigned_by_user_id: number;
-  status: 'ASSIGNED' | 'EN_ROUTE' | 'ON_SITE' | 'COMPLETED';
+  status: 'ASSIGNED' | 'EN_ROUTE' | 'ON_SITE' | 'IN_PROGRESS' | 'COMPLETED';
   notes?: string;
   assigned_at: string;
   completed_at?: string;
+  report?: CitizenReport;
 }
 
 export interface Scenario {

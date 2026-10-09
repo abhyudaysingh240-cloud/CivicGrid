@@ -43,13 +43,13 @@ export const AppShell: React.FC<AppShellProps> = ({
       role: 'CITIZEN',
       label: 'Citizen Portal',
       icon: <Home className="w-4 h-4" aria-hidden="true" />,
-      description: 'Report issues & view community status',
+      description: 'Report issues & track status',
     },
     {
       role: 'FIELD_WORKER',
-      label: 'Field Dispatch',
+      label: 'Field Operations',
       icon: <Layers className="w-4 h-4" aria-hidden="true" />,
-      description: 'Assigned repairs & status updates',
+      description: 'Assigned tasks & job updates',
     },
     {
       role: 'DEPARTMENT_OFFICER',
@@ -59,9 +59,9 @@ export const AppShell: React.FC<AppShellProps> = ({
     },
     {
       role: 'ADMIN',
-      label: 'Grid Command & Admin',
+      label: 'Admin Command Center',
       icon: <Users className="w-4 h-4" aria-hidden="true" />,
-      description: 'Self-healing grid, telemetry & audit logs',
+      description: 'Triage, staff dispatch & audit logs',
     },
   ];
 

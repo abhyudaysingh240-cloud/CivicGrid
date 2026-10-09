@@ -226,7 +226,7 @@ class AssignmentCreate(BaseModel):
     notes: Optional[str] = None
 
 class AssignmentStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(ASSIGNED|EN_ROUTE|ON_SITE|COMPLETED)$")
+    status: str = Field(..., pattern="^(ASSIGNED|EN_ROUTE|ON_SITE|IN_PROGRESS|COMPLETED)$")
     notes: Optional[str] = None
 
 class AssignmentOut(BaseModel):
@@ -240,6 +240,7 @@ class AssignmentOut(BaseModel):
     notes: Optional[str] = None
     assigned_at: datetime
     completed_at: Optional[datetime] = None
+    report: Optional[CitizenReportOut] = None
 
     class Config:
         from_attributes = True
