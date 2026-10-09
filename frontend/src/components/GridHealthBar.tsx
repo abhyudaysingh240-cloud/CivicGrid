@@ -97,20 +97,34 @@ export const GridHealthBar: React.FC<GridHealthBarProps> = ({
         <div className="w-full lg:w-48 bg-charcoal-800/80 border border-charcoal-700/60 rounded-xl p-2.5">
           <div className="flex justify-between items-center text-[11px] font-mono mb-1.5">
             <span className="text-slate-400">RESTORATION</span>
-            <span className={`font-bold ${state.restoration_pct >= 99 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {state.restoration_pct.toFixed(0)}%
+            <span className={`font-bold ${
+              state.affected_load_mw === 0 || state.restoration_pct === null || state.restoration_status === 'NO_ACTIVE_FAULT'
+                ? 'text-slate-400 text-[10px]'
+                : state.restoration_pct >= 99
+                ? 'text-emerald-400'
+                : 'text-amber-400'
+            }`}>
+              {state.affected_load_mw === 0 || state.restoration_pct === null || state.restoration_status === 'NO_ACTIVE_FAULT'
+                ? 'N/A, no active fault'
+                : `${state.restoration_pct.toFixed(0)}%`}
             </span>
           </div>
           <div className="w-full h-2 bg-charcoal-950 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-700 ${
-                state.restoration_pct >= 99
+                state.affected_load_mw === 0 || state.restoration_pct === null
+                  ? 'bg-slate-700'
+                  : state.restoration_pct >= 99
                   ? 'bg-emerald-400'
                   : state.restoration_pct > 0
                   ? 'bg-amber-400'
                   : 'bg-red-500'
               }`}
-              style={{ width: `${state.restoration_pct}%` }}
+              style={{
+                width: state.affected_load_mw === 0 || state.restoration_pct === null
+                  ? '0%'
+                  : `${state.restoration_pct}%`
+              }}
             />
           </div>
           <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mt-1">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiRequest } from '../api/client';
 import { User } from '../types';
-import { Lock, X, KeyRound, AlertCircle } from 'lucide-react';
+import { Lock, X, AlertCircle } from 'lucide-react';
 
 interface LoginModalProps {
   onSuccess: (user: User) => void;
@@ -35,11 +35,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
     }
   };
 
-  const quickFill = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-950/80 backdrop-blur-sm">
       <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl w-full max-w-md p-6 space-y-5 shadow-2xl">
@@ -54,6 +49,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
             </div>
           </div>
           <button
+            id="login-modal-close"
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800"
           >
@@ -68,67 +64,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onSuccess, onClose }) =>
           </div>
         )}
 
-        {/* Quick Fill Credentials for Evaluators / Judges */}
-        <div className="bg-charcoal-950/80 p-3 rounded-xl border border-charcoal-800 space-y-1.5">
-          <div className="text-[10px] font-mono text-slate-400 uppercase">
-            QUICK SEED DEMO ACCOUNTS:
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => quickFill('admin', 'AdminPassword123!')}
-              className="text-left px-2 py-1 rounded bg-charcoal-800 hover:bg-charcoal-700 text-[10px] font-mono text-electric-400 transition-all"
-            >
-              ★ Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => quickFill('operator1', 'OperatorPassword123!')}
-              className="text-left px-2 py-1 rounded bg-charcoal-800 hover:bg-charcoal-700 text-[10px] font-mono text-electric-400 transition-all"
-            >
-              ★ Officer
-            </button>
-            <button
-              type="button"
-              onClick={() => quickFill('worker1', 'WorkerPassword123!')}
-              className="text-left px-2 py-1 rounded bg-charcoal-800 hover:bg-charcoal-700 text-[10px] font-mono text-electric-400 transition-all"
-            >
-              ★ Field Worker
-            </button>
-            <button
-              type="button"
-              onClick={() => quickFill('citizen1', 'CitizenPassword123!')}
-              className="text-left px-2 py-1 rounded bg-charcoal-800 hover:bg-charcoal-700 text-[10px] font-mono text-electric-400 transition-all"
-            >
-              ★ Citizen
-            </button>
-          </div>
-        </div>
-
         <form onSubmit={handleLogin} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-mono text-slate-300 mb-1">USERNAME OR EMAIL</label>
+            <label htmlFor="login-username" className="block text-xs font-mono text-slate-300 mb-1">USERNAME OR EMAIL</label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-charcoal-800 border border-charcoal-700 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-electric-400"
+              autoComplete="username"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-slate-300 mb-1">PASSWORD</label>
+            <label htmlFor="login-password" className="block text-xs font-mono text-slate-300 mb-1">PASSWORD</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-charcoal-800 border border-charcoal-700 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-electric-400"
+              autoComplete="current-password"
               required
             />
           </div>
 
           <button
+            id="login-submit"
             type="submit"
             disabled={loading}
             className="w-full py-2.5 rounded-xl text-xs font-mono font-bold bg-electric-500 hover:bg-electric-400 text-white transition-all shadow-md disabled:opacity-50"

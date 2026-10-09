@@ -56,7 +56,7 @@ def run_acceptance_pipeline():
     print("\n[STEP 0] Initializing database schema and versioned seed fixtures...")
     Base.metadata.create_all(bind=test_engine)
     db = TestingSession()
-    seed_database(db)
+    seed_database(db, seed_demo_users=True, user_passwords={"admin": "AdminPassword123!"})
     db.close()
     print("  -> PASS: Database seeded with 24 nodes, 28 edges, 4 tie lines, and default roles.")
 

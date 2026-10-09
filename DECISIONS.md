@@ -80,3 +80,16 @@ This log documents every architectural decision, alternatives considered, trade-
   - *Canvas 2D / WebGL manual rendering*: High development cost, harder to make accessible and interactive.
   - *D3.js Force Simulation*: Unstable layout for power distribution single-line diagrams where fixed/spatial topological hierarchy is crucial.
 - **Trade-off / Justification**: React Flow offers production-grade zoom/pan, custom SVG node rendering, edge routing, and node selection callbacks.
+
+---
+
+### DEC-007: Credential Hardening, Strict Server-Side Role Enforcement, and Honest Metric Semantics
+- **Context**: Audit revealed plaintext credentials in `LoginModal.tsx` ("QUICK SEED DEMO ACCOUNTS"), client-side role switching in `Navbar.tsx`, lack of RBAC on `/grid/*` endpoints (allowing citizens to read load-flow data), misleading 100% restoration display when affected load was 0 MW, and missing image provenance tags.
+- **Decision**:
+  1. *Complete Credential Purge*: Removed the Quick Seed demo accounts panel and all hardcoded passwords from the frontend. The production bundle (`frontend/dist`) contains zero plaintext credentials or role shortcuts.
+  2. *Secure User Seeding & Administration CLI*: Default users are only seeded when `SEED_DEMO_USERS=true`, with passwords derived from environment variables or secure random tokens printed once to server stdout. Added `python -m app.cli create-admin` and `python -m app.cli reset-password <username>` CLI tools.
+  3. *Strict RBAC & Route Isolation*: Gated `/api/v1/grid/*` and `/api/v1/scenarios` endpoints to `ADMIN` and `DEPARTMENT_OFFICER` roles with HTTP 403 enforcement for `CITIZEN` and `FIELD_WORKER`. Removed client-side role switcher from `Navbar.tsx`; user role is strictly derived from `/auth/me`. Citizen view is completely isolated from grid telemetry and SSE streams.
+  4. *Honest Metric Semantics*: Updated `GridStateMachine` and `GridHealthBar` so that when `affected_load == 0.0`, `restoration_pct` is `null` and displayed as `"N/A, no active fault"`. Proper `PARTIAL`, `FULL`, and `FAILED` restoration statuses are assigned dynamically.
+  5. *AI & Provenance Transparency*: Annotated citizen reports with explicit classification provenance chips (`AI_CLASSIFICATION`, `RULE_BASED_FALLBACK`, `IMAGE NOT CLASSIFIED`).
+- **Trade-off / Justification**: Eliminates critical credential leakage vulnerabilities, enforces robust principle of least privilege, and ensures mathematical integrity in operational dashboards.
+

@@ -52,18 +52,18 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
     }
 
     try {
-      await apiRequest('/civic/reports', {
+      const created = await apiRequest<CitizenReport>('/civic/reports', {
         method: 'POST',
         body: formData,
       });
 
-      setSuccess('Incident report submitted successfully and analyzed by AI classifier.');
+      setSuccess(`Report #${created.id} recorded. Provenance: ${created.classification_source}`);
       setDescription('');
       setSeverity(2);
       setSelectedAssetId('');
       setImageFile(null);
       loadMyReports();
-      onReportCreated();
+      if (onReportCreated) onReportCreated();
     } catch (err: any) {
       setError(err.message || 'Failed to submit incident report.');
     } finally {
@@ -224,10 +224,23 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
 
                 <p className="text-xs text-slate-200 line-clamp-2">{rep.description}</p>
 
-                <div className="pt-2 border-t border-charcoal-800 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                  <span className="px-1.5 py-0.5 rounded bg-charcoal-800 text-slate-300">
-                    Source: {rep.classification_source}
-                  </span>
+                <div className="pt-2 border-t border-charcoal-800 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-slate-400">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded font-bold border ${
+                      rep.classification_source === 'AI_CLASSIFICATION'
+                        ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                        : rep.classification_source === 'RULE_BASED_FALLBACK'
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
+                    }`}>
+                      {rep.classification_source}
+                    </span>
+                    {rep.image_filename && (
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                        IMAGE NOT CLASSIFIED
+                      </span>
+                    )}
+                  </div>
                   <span>Priority: {rep.priority_score.toFixed(1)} / 100</span>
                 </div>
               </div>

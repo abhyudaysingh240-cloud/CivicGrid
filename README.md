@@ -74,14 +74,38 @@ npm run dev --prefix frontend
 
 ---
 
-## 3. Seeded Test Credentials
+## 3. Evaluator & Presenter Credentials
 
-| Role | Username | Password | Access Scope |
-|---|---|---|---|
-| **Admin** | `admin` | `AdminPassword123!` | System configuration, scenario injections, audit logs |
-| **Department Officer** | `operator1` | `OperatorPassword123!` | Grid topology control, triage, work order assignment |
-| **Field Worker** | `worker1` | `WorkerPassword123!` | Assigned maintenance orders, status progression |
-| **Citizen** | `citizen1` | `CitizenPassword123!` | Incident reporting, public grid health monitoring |
+In compliance with security standards, **no credentials, demo shortcuts, or role-switching buttons exist on the screen or in client bundles**.
+
+To obtain evaluation credentials:
+1. **Server Console Output (One-time on seed)**:
+   Set `SEED_DEMO_USERS=true` in `.env` and run `python scripts/cli_runner.py seed`. The server securely generates and prints user passwords once to stdout:
+   ```powershell
+   $env:SEED_DEMO_USERS = "true"
+   .\.venv\Scripts\python.exe scripts\cli_runner.py seed
+   ```
+2. **Deterministic Custom Passwords (via .env)**:
+   Optionally specify passwords in your `.env` file before seeding:
+   - `ADMIN_PASSWORD=...`
+   - `OPERATOR_PASSWORD=...`
+   - `WORKER_PASSWORD=...`
+   - `CITIZEN_PASSWORD=...`
+3. **Administrative CLI Operations**:
+   ```powershell
+   # Create a new administrator account (prints credentials to console)
+   .\.venv\Scripts\python.exe -m app.cli create-admin --username admin --email admin@civicgrid.internal
+
+   # Reset password for any existing account (e.g., operator1, citizen1)
+   .\.venv\Scripts\python.exe -m app.cli reset-password operator1
+   ```
+
+| Role | Default Username | Access Scope |
+|---|---|---|
+| **Admin** | `admin` | System configuration, scenario injections, user roles, immutable audit logs |
+| **Department Officer** | `operator1` | Digital twin grid topology, telemetry, incident triage, work order assignment |
+| **Field Worker** | `worker1` | Assigned maintenance work orders and status lifecycle |
+| **Citizen** | `citizen1` | Incident reporting (NLP classified & clustered), own reports tracking |
 
 ---
 

@@ -70,7 +70,8 @@ class GridStateOut(BaseModel):
     affected_load_mw: float
     restored_load_mw: float
     unserved_load_mw: float
-    restoration_pct: float
+    restoration_pct: Optional[float] = None
+    restoration_status: str = "NO_ACTIVE_FAULT"
     active_fault_edge_id: Optional[int] = None
     closed_tie_edge_id: Optional[int] = None
     details_json: Optional[Dict[str, Any]] = None

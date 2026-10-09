@@ -69,3 +69,39 @@ def test_scenario_reproducibility(test_db):
 
     assert state1_pct == state2_pct == 100.0
     assert state1_restored == state2_restored
+
+def test_metric_semantics_affected_zero(test_db):
+    # Baseline healthy grid has 0 affected load: restoration_pct must be None and status NO_ACTIVE_FAULT
+    st = GridStateMachine.get_current_state(test_db)
+    assert st.affected_load_mw == 0.0
+    assert st.restoration_pct is None
+    assert st.restoration_status == "NO_ACTIVE_FAULT"
+
+def test_metric_semantics_partial_full_failed(test_db):
+    # Transition to FAULT_DETECTED with 10 MW affected
+    st_fault = GridStateMachine.transition_to(
+        test_db, "FAULT_DETECTED", reason="Fault injected",
+        total_load=33.0, affected_load=10.0, restored_load=0.0, unserved_load=10.0
+    )
+    assert st_fault.affected_load_mw == 10.0
+    assert st_fault.restoration_pct == 0.0
+    assert st_fault.restoration_status == "FAILED"
+
+    # Transition through ANALYZING to RECONFIGURING
+    GridStateMachine.transition_to(test_db, "ANALYZING", reason="Analyzing paths")
+    GridStateMachine.transition_to(test_db, "RECONFIGURING", reason="Closing tie")
+
+    # Partial restoration (5 of 10 MW restored)
+    st_part = GridStateMachine.transition_to(
+        test_db, "RESTORED", reason="Partial restoration",
+        total_load=33.0, affected_load=10.0, restored_load=5.0, unserved_load=5.0
+    )
+    assert st_part.restoration_pct == 50.0
+    assert st_part.restoration_status == "PARTIAL"
+
+    # Reset to normal
+    st_norm = GridStateMachine.transition_to(test_db, "NORMAL", reason="Grid reset")
+    assert st_norm.affected_load_mw == 0.0
+    assert st_norm.restoration_pct is None
+    assert st_norm.restoration_status == "NO_ACTIVE_FAULT"
+

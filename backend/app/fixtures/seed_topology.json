@@ -693,28 +693,24 @@
     {
       "username": "admin",
       "email": "admin@civicgrid.internal",
-      "role": "ADMIN",
-      "password": "AdminPassword123!"
+      "role": "ADMIN"
     },
     {
       "username": "operator1",
       "email": "operator@civicgrid.internal",
       "role": "DEPARTMENT_OFFICER",
-      "role_dept": "ELEC",
-      "password": "OperatorPassword123!"
+      "role_dept": "ELEC"
     },
     {
       "username": "worker1",
       "email": "worker@civicgrid.internal",
       "role": "FIELD_WORKER",
-      "role_dept": "ELEC",
-      "password": "WorkerPassword123!"
+      "role_dept": "ELEC"
     },
     {
       "username": "citizen1",
       "email": "citizen@civicgrid.internal",
-      "role": "CITIZEN",
-      "password": "CitizenPassword123!"
+      "role": "CITIZEN"
     }
   ]
 }

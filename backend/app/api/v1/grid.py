@@ -16,7 +16,10 @@ from backend.app.schemas.schemas import (
 router = APIRouter(prefix="/grid", tags=["Grid Engine"])
 
 @router.get("/topology")
-def get_grid_topology(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_grid_topology(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
+):
     """
     Returns full digital twin network topology, current electrical loads,
     substation metrics, and detected electrical islands.
@@ -93,7 +96,10 @@ def reset_grid(
 
 
 @router.get("/state", response_model=GridStateOut)
-def get_grid_state(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_grid_state(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
+):
     return db.query(GridState).order_by(GridState.id.desc()).first()
 
 
@@ -101,13 +107,16 @@ def get_grid_state(db: Session = Depends(get_db), current_user: User = Depends(g
 def get_grid_events(
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
 ):
     return db.query(GridEvent).order_by(GridEvent.id.desc()).limit(limit).all()
 
 
 @router.get("/why-restoration")
-def get_why_restoration(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_why_restoration(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
+):
     """
     Returns complete mathematical breakdown of candidate paths evaluated,
     composite costs, thermal capacity margins, and selection rationale.
@@ -127,7 +136,11 @@ def get_why_restoration(db: Session = Depends(get_db), current_user: User = Depe
 
 
 @router.get("/stream")
-async def grid_event_stream(request: Request, db: Session = Depends(get_db)):
+async def grid_event_stream(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
+):
     """
     Server-Sent Events (SSE) endpoint broadcasting live grid state and events.
     """

@@ -56,16 +56,43 @@ def register_user(payload: UserRegister, request: Request, db: Session = Depends
     return new_user
 
 
+import time
+from collections import defaultdict
+
+# Sliding window rate limiter for login attempts: ip -> list of timestamps
+_failed_login_attempts = defaultdict(list)
+_RATE_LIMIT_WINDOW_SECONDS = 60
+_MAX_FAILED_ATTEMPTS = 5
+
+def _check_rate_limit(client_ip: str):
+    now = time.time()
+    attempts = [t for t in _failed_login_attempts[client_ip] if now - t < _RATE_LIMIT_WINDOW_SECONDS]
+    _failed_login_attempts[client_ip] = attempts
+    if len(attempts) >= _MAX_FAILED_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please try again after 60 seconds."
+        )
+
+def _record_failed_attempt(client_ip: str):
+    _failed_login_attempts[client_ip].append(time.time())
+
+def _clear_failed_attempts(client_ip: str):
+    _failed_login_attempts.pop(client_ip, None)
+
+
 @router.post("/login", response_model=UserOut)
 def login_user(payload: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(ip)
+
     # Find user by username or email
     user = db.query(User).filter(
         (User.username == payload.username_or_email) | (User.email == payload.username_or_email)
     ).first()
 
-    ip = request.client.host if request.client else None
-
     if not user or not verify_password(payload.password, user.hashed_password):
+        _record_failed_attempt(ip)
         log_audit_event(
             db=db,
             actor=user,
@@ -79,6 +106,9 @@ def login_user(payload: UserLogin, request: Request, response: Response, db: Ses
 
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is deactivated.")
+
+    # Successful login clears failed attempt records
+    _clear_failed_attempts(ip)
 
     # Create JWT
     token = create_access_token(subject=user.id, role=user.role)

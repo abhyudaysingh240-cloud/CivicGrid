@@ -1,3 +1,5 @@
+import os
+import secrets
 import json
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -10,7 +12,7 @@ from backend.app.models.models import (
 
 FIXTURE_PATH = Path(__file__).parent / "seed_topology.json"
 
-def seed_database(db: Session = None):
+def seed_database(db: Session = None, seed_demo_users: bool = None, user_passwords: dict = None):
     own_session = False
     if db is None:
         Base.metadata.create_all(bind=engine)
@@ -33,21 +35,39 @@ def seed_database(db: Session = None):
             else:
                 dept_map[d["code"]] = existing.id
 
-        # 2. Seed Default Users
-        for u in data.get("default_users", []):
-            existing_user = db.query(User).filter(User.username == u["username"]).first()
-            dept_id = dept_map.get(u.get("role_dept"))
-            if not existing_user:
-                new_user = User(
-                    username=u["username"],
-                    email=u["email"],
-                    hashed_password=get_password_hash(u["password"]),
-                    role=u["role"],
-                    department_id=dept_id,
-                    is_active=True
-                )
-                db.add(new_user)
-        db.flush()
+        # 2. Seed Default Users (Gated by SEED_DEMO_USERS=true, never hardcoded in bundle or fixture)
+        should_seed_users = seed_demo_users
+        if should_seed_users is None:
+            should_seed_users = os.getenv("SEED_DEMO_USERS", "false").lower() in ("true", "1")
+
+        if should_seed_users:
+            for u in data.get("default_users", []):
+                existing_user = db.query(User).filter(User.username == u["username"]).first()
+                dept_id = dept_map.get(u.get("role_dept"))
+
+                # Secure password determination: explicit dict, env var, or secure random token
+                if user_passwords and u["username"] in user_passwords:
+                    pwd = user_passwords[u["username"]]
+                else:
+                    env_var = f"{u['username'].upper()}_PASSWORD"
+                    pwd = os.getenv(env_var, os.getenv("DEMO_USER_PASSWORD"))
+                    if not pwd:
+                        pwd = secrets.token_urlsafe(16)
+                        print(f"[CIVICGRID SEED] Generated credentials for '{u['username']}': {pwd}")
+
+                if not existing_user:
+                    new_user = User(
+                        username=u["username"],
+                        email=u["email"],
+                        hashed_password=get_password_hash(pwd),
+                        role=u["role"],
+                        department_id=dept_id,
+                        is_active=True
+                    )
+                    db.add(new_user)
+                else:
+                    existing_user.hashed_password = get_password_hash(pwd)
+            db.flush()
 
         # 3. Seed Grid Nodes
         node_map = {}
@@ -125,9 +145,10 @@ def seed_database(db: Session = None):
                 state_enum="NORMAL",
                 total_load_mw=round(tot_load, 2),
                 affected_load_mw=0.0,
-                restored_load_mw=round(tot_load, 2),
+                restored_load_mw=0.0,
                 unserved_load_mw=0.0,
-                restoration_pct=100.0,
+                restoration_pct=None,
+                restoration_status="NO_ACTIVE_FAULT",
                 details_json={"message": "System operational in baseline configuration."}
             )
             db.add(base_state)

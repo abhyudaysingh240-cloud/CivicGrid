@@ -10,7 +10,9 @@ from backend.app.grid.scenarios import ScenarioEngine
 router = APIRouter(prefix="/scenarios", tags=["Scenarios"])
 
 @router.get("")
-def list_scenarios(current_user: User = Depends(get_current_user)):
+def list_scenarios(
+    current_user: User = Depends(require_role("ADMIN", "DEPARTMENT_OFFICER"))
+):
     return ScenarioEngine.get_catalog()
 
 @router.post("/{code}/run")

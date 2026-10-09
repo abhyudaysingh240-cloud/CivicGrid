@@ -27,7 +27,8 @@ export interface GridState {
   affected_load_mw: number;
   restored_load_mw: number;
   unserved_load_mw: number;
-  restoration_pct: number;
+  restoration_pct: number | null;
+  restoration_status?: 'NO_ACTIVE_FAULT' | 'PARTIAL' | 'FULL' | 'FAILED';
   active_fault_edge_id?: number;
   closed_tie_edge_id?: number;
   details_json?: any;

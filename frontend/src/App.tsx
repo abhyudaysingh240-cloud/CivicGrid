@@ -27,7 +27,7 @@ import { Activity, ShieldAlert, Layers, Bell, RefreshCw } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeRole, setActiveRole] = useState<Role>('ADMIN');
+  const [activeRole, setActiveRole] = useState<Role>('CITIZEN');
   const [topology, setTopology] = useState<GridTopologyData | null>(null);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [assets, setAssets] = useState<InfrastructureAsset[]>([]);
@@ -44,64 +44,77 @@ export const App: React.FC = () => {
   // Events Feed
   const [events, setEvents] = useState<any[]>([]);
 
-  // 1. Fetch Topology & Baseline Data
+  // 1. Fetch Topology & Baseline Data (Authorized operator roles only)
+  const isGridOperator = activeRole === 'ADMIN' || activeRole === 'DEPARTMENT_OFFICER';
+
   const refreshTopology = useCallback(async () => {
+    if (!isGridOperator) return;
     try {
       const top = await apiRequest<GridTopologyData>('/grid/topology');
       setTopology(top);
     } catch (err) {
       console.error('Topology fetch error:', err);
     }
-  }, []);
+  }, [isGridOperator]);
 
   const refreshEvents = useCallback(async () => {
+    if (!isGridOperator) return;
     try {
       const evts = await apiRequest<any[]>('/grid/events?limit=20');
       setEvents(evts);
     } catch (err) {
       // ignore
     }
-  }, []);
+  }, [isGridOperator]);
 
   // 2. Initial Setup
   useEffect(() => {
-    // Check active session
+    // Check active session against server truth
     apiRequest<User>('/auth/me')
       .then((u) => {
         setCurrentUser(u);
         setActiveRole(u.role);
       })
       .catch(() => {
-        // Fallback default admin view for prototype review
-        setActiveRole('ADMIN');
+        setCurrentUser(null);
+        setActiveRole('CITIZEN');
       });
-
-    refreshTopology();
-    refreshEvents();
-
-    apiRequest<Scenario[]>('/scenarios')
-      .then(setScenarios)
-      .catch(() => []);
 
     apiRequest<InfrastructureAsset[]>('/civic/assets')
       .then(setAssets)
       .catch(() => []);
-  }, [refreshTopology, refreshEvents]);
+  }, []);
 
-  // 3. Server-Sent Events (SSE) with Fallback Polling
+  // Fetch grid data and scenarios whenever an operator role is active
   useEffect(() => {
+    if (isGridOperator) {
+      refreshTopology();
+      refreshEvents();
+      apiRequest<Scenario[]>('/scenarios')
+        .then(setScenarios)
+        .catch(() => []);
+    } else {
+      setTopology(null);
+      setEvents([]);
+      setScenarios([]);
+    }
+  }, [isGridOperator, refreshTopology, refreshEvents]);
+
+  // 3. Server-Sent Events (SSE) with Fallback Polling (Operators only)
+  useEffect(() => {
+    if (!isGridOperator) return;
+
     let eventSource: EventSource | null = null;
     let pollInterval: any = null;
 
     try {
       eventSource = new EventSource('/api/v1/grid/stream');
-      eventSource.addEventListener('grid_event', (e) => {
+      eventSource.addEventListener('grid_event', () => {
         refreshTopology();
         refreshEvents();
       });
       eventSource.onerror = () => {
         if (eventSource) eventSource.close();
-        // Fallback polling every 3 seconds if SSE connection drops
         pollInterval = setInterval(() => {
           refreshTopology();
           refreshEvents();
@@ -118,7 +131,7 @@ export const App: React.FC = () => {
       if (eventSource) eventSource.close();
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [refreshTopology, refreshEvents]);
+  }, [isGridOperator, refreshTopology, refreshEvents]);
 
   // Actions
   const handleRunScenario = async (code: string) => {
@@ -222,14 +235,13 @@ export const App: React.FC = () => {
       <Navbar
         currentUser={currentUser}
         activeRole={activeRole}
-        onChangeRole={setActiveRole}
         onLogout={handleLogout}
         onOpenLogin={() => setLoginModalOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Real-Time Grid Health Meter */}
-        {topology && (
+        {/* Real-Time Grid Health Meter — strictly for Grid Operator / Admin roles */}
+        {topology && isGridOperator && (
           <GridHealthBar
             state={topology.state}
             islands={topology.islands}
@@ -260,7 +272,7 @@ export const App: React.FC = () => {
                 edges={topology.edges}
                 islands={topology.islands}
                 onSelectNode={setSelectedNode}
-                onSelectEdge={(e) => {}}
+                onSelectEdge={() => {}}
               />
             )}
 
@@ -277,7 +289,7 @@ export const App: React.FC = () => {
                 edges={topology.edges}
                 islands={topology.islands}
                 onSelectNode={setSelectedNode}
-                onSelectEdge={(e) => {}}
+                onSelectEdge={() => {}}
               />
             )}
             <OfficerDashboard
@@ -290,67 +302,60 @@ export const App: React.FC = () => {
 
         {activeRole === 'FIELD_WORKER' && (
           <div className="space-y-6">
-            {topology && (
-              <TopologyCanvas
-                nodes={topology.nodes}
-                edges={topology.edges}
-                islands={topology.islands}
-                onSelectNode={setSelectedNode}
-                onSelectEdge={(e) => {}}
-              />
-            )}
             <WorkerDashboard />
           </div>
         )}
 
         {activeRole === 'CITIZEN' && (
-          <CitizenPortal assets={assets} onReportCreated={refreshTopology} />
+          <CitizenPortal assets={assets} onReportCreated={() => {}} />
         )}
 
-        {/* Live Grid Event Log Stream */}
-        <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1 rounded-lg bg-electric-500/15 text-electric-400">
-                <Bell className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
-                REAL-TIME AUDITED TELEMETRY & EVENT STREAM
-              </span>
-            </div>
-            <button
-              onClick={refreshEvents}
-              className="text-slate-400 hover:text-slate-200 transition-all"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {events.slice(0, 8).map((evt) => (
-              <div
-                key={evt.id}
-                className="flex items-center justify-between text-xs font-mono p-2 rounded-lg bg-charcoal-950/70 border border-charcoal-800"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      evt.severity === 'CRITICAL'
-                        ? 'bg-red-500 animate-ping'
-                        : evt.severity === 'WARNING'
-                        ? 'bg-amber-400'
-                        : 'bg-emerald-400'
-                    }`}
-                  />
-                  <span className="text-slate-300">{evt.description}</span>
+        {/* Live Grid Event Log Stream — strictly visible to Grid Operators */}
+        {isGridOperator && (
+          <div className="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded-lg bg-electric-500/15 text-electric-400">
+                  <Bell className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] text-slate-500 shrink-0 ml-3">
-                  {new Date(evt.timestamp).toLocaleTimeString()}
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
+                  REAL-TIME AUDITED TELEMETRY & EVENT STREAM
                 </span>
               </div>
-            ))}
+              <button
+                onClick={refreshEvents}
+                className="text-slate-400 hover:text-slate-200 transition-all"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {events.slice(0, 8).map((evt) => (
+                <div
+                  key={evt.id}
+                  className="flex items-center justify-between text-xs font-mono p-2 rounded-lg bg-charcoal-950/70 border border-charcoal-800"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        evt.severity === 'CRITICAL'
+                          ? 'bg-red-500 animate-ping'
+                          : evt.severity === 'WARNING'
+                          ? 'bg-amber-400'
+                          : 'bg-emerald-400'
+                      }`}
+                    />
+                    <span className="text-slate-300">{evt.description}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 shrink-0 ml-3">
+                    {new Date(evt.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Asset Inspection Drawer */}

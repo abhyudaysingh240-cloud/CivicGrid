@@ -5,7 +5,6 @@ import { Zap, ShieldCheck, UserCheck, LogOut, Radio } from 'lucide-react';
 interface NavbarProps {
   currentUser: User | null;
   activeRole: Role;
-  onChangeRole: (role: Role) => void;
   onLogout: () => void;
   onOpenLogin: () => void;
 }
@@ -13,7 +12,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   activeRole,
-  onChangeRole,
   onLogout,
   onOpenLogin,
 }) => {
@@ -39,34 +37,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Right side controls: Role switch and user profile */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          {/* Quick Role Switcher for Demo Evaluation */}
-          <div className="flex items-center gap-1.5 bg-charcoal-950 p-1 rounded-xl border border-charcoal-700">
-            <span className="text-[10px] font-mono text-slate-400 px-2 uppercase hidden md:inline">
-              OPERATIONAL VIEW:
-            </span>
-            {(['ADMIN', 'DEPARTMENT_OFFICER', 'FIELD_WORKER', 'CITIZEN'] as Role[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => onChangeRole(r)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium transition-all ${
-                  activeRole === r
-                    ? 'bg-electric-500 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {r === 'DEPARTMENT_OFFICER' ? 'OFFICER' : r === 'FIELD_WORKER' ? 'WORKER' : r}
-              </button>
-            ))}
-          </div>
-
-          {/* User Status / Login */}
+        {/* Right side controls: authenticated user profile and login/logout */}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
           {currentUser ? (
-            <div className="flex items-center gap-2">
-              <div className="text-right hidden lg:block">
+            <div className="flex items-center gap-2.5">
+              <div className="text-right">
                 <div className="text-xs font-mono font-bold text-slate-200">{currentUser.username}</div>
-                <div className="text-[10px] font-mono text-electric-400">{currentUser.role}</div>
+                <div className="text-[10px] font-mono text-electric-400 font-bold uppercase tracking-wider">{currentUser.role}</div>
               </div>
               <button
                 onClick={onLogout}
@@ -77,12 +54,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
           ) : (
-            <button
-              onClick={onOpenLogin}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-electric-500 hover:bg-electric-400 text-white transition-all shadow-md"
-            >
-              Log In
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">Role: CITIZEN</span>
+              <button
+                onClick={onOpenLogin}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-electric-500 hover:bg-electric-400 text-white transition-all shadow-md"
+              >
+                Log In
+              </button>
+            </div>
           )}
         </div>
       </div>

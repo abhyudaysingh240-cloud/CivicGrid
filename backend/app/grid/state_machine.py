@@ -36,9 +36,10 @@ class GridStateMachine:
                 state_enum="NORMAL",
                 total_load_mw=33.0,
                 affected_load_mw=0.0,
-                restored_load_mw=33.0,
+                restored_load_mw=0.0,
                 unserved_load_mw=0.0,
-                restoration_pct=100.0,
+                restoration_pct=None,
+                restoration_status="NO_ACTIVE_FAULT",
                 details_json={"message": "System operational, all radial feeders healthy."}
             )
             db.add(state)
@@ -80,12 +81,31 @@ class GridStateMachine:
         res = restored_load if restored_load is not None else current.restored_load_mw
         uns = unserved_load if unserved_load is not None else current.unserved_load_mw
         
-        pct = restoration_pct
-        if pct is None:
-            if aff > 0:
-                pct = round((res / aff) * 100.0, 1)
-            else:
+        # Section A3: Metric Semantics
+        if new_state == "NORMAL":
+            aff = 0.0
+            res = 0.0
+            uns = 0.0
+            pct = None
+            status_str = "NO_ACTIVE_FAULT"
+        elif aff > 0:
+            if new_state == "RECONFIGURATION_FAILED":
+                pct = 0.0
+                status_str = "FAILED"
+            elif res >= aff and uns == 0:
                 pct = 100.0
+                status_str = "FULL"
+            elif res > 0:
+                pct = round((res / aff) * 100.0, 1)
+                status_str = "PARTIAL"
+            else:
+                pct = 0.0
+                status_str = "FAILED"
+            if restoration_pct is not None:
+                pct = min(100.0, max(0.0, restoration_pct))
+        else:
+            pct = None
+            status_str = "NO_ACTIVE_FAULT"
 
         new_state_record = GridState(
             timestamp=datetime.now(timezone.utc),
@@ -94,9 +114,10 @@ class GridStateMachine:
             affected_load_mw=aff,
             restored_load_mw=res,
             unserved_load_mw=uns,
-            restoration_pct=min(100.0, max(0.0, pct)),
-            active_fault_edge_id=active_fault_edge_id or current.active_fault_edge_id,
-            closed_tie_edge_id=closed_tie_edge_id or current.closed_tie_edge_id,
+            restoration_pct=pct,
+            restoration_status=status_str,
+            active_fault_edge_id=active_fault_edge_id if active_fault_edge_id is not None else (None if new_state == "NORMAL" else current.active_fault_edge_id),
+            closed_tie_edge_id=closed_tie_edge_id if closed_tie_edge_id is not None else (None if new_state == "NORMAL" else current.closed_tie_edge_id),
             details_json=details or {"reason": reason}
         )
         db.add(new_state_record)

@@ -107,7 +107,8 @@ class GridState(Base):
     affected_load_mw = Column(Float, nullable=False, default=0.0)
     restored_load_mw = Column(Float, nullable=False, default=0.0)
     unserved_load_mw = Column(Float, nullable=False, default=0.0)
-    restoration_pct = Column(Float, nullable=False, default=100.0)
+    restoration_pct = Column(Float, nullable=True, default=None)
+    restoration_status = Column(String(30), nullable=False, default="NO_ACTIVE_FAULT")  # NO_ACTIVE_FAULT, PARTIAL, FULL, FAILED
     active_fault_edge_id = Column(Integer, ForeignKey("grid_edges.id", ondelete="SET NULL"), nullable=True)
     closed_tie_edge_id = Column(Integer, ForeignKey("grid_edges.id", ondelete="SET NULL"), nullable=True)
     details_json = Column(JSON, nullable=True)
@@ -117,7 +118,11 @@ class GridState(Base):
             "state_enum IN ('NORMAL', 'FAULT_DETECTED', 'ISLANDED', 'ANALYZING', 'RECONFIGURING', 'RESTORED', 'RECONFIGURATION_FAILED')", 
             name="chk_grid_state_enum"
         ),
-        CheckConstraint("restoration_pct >= 0.0 AND restoration_pct <= 100.0", name="chk_restoration_pct_range"),
+        CheckConstraint(
+            "restoration_status IN ('NO_ACTIVE_FAULT', 'PARTIAL', 'FULL', 'FAILED')",
+            name="chk_restoration_status"
+        ),
+        CheckConstraint("restoration_pct IS NULL OR (restoration_pct >= 0.0 AND restoration_pct <= 100.0)", name="chk_restoration_pct_range"),
     )
 
 
