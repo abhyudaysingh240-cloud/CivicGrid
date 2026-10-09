@@ -1,0 +1,27 @@
+# Environments and packages
+.venv/
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local databases and secret environment files
+.env
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+backend/uploads/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

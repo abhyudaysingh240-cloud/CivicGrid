@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from backend.app.grid.service import GridService
 from backend.app.models.models import GridEdge, User

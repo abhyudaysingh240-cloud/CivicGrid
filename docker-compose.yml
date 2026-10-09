@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: civicgrid_db
+    restart: always
+    environment:
+      POSTGRES_USER: civicgrid
+      POSTGRES_PASSWORD: civicgrid_secure_password
+      POSTGRES_DB: civicgrid
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civicgrid -d civicgrid"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
