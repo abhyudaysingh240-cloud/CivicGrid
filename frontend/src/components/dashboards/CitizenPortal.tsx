@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CitizenReport, InfrastructureAsset } from '../../types';
-import { apiRequest } from '../../api/client';
+import React, { useState, useRef, useCallback } from 'react';
+import { CitizenReport, InfrastructureAsset, User } from '../../types';
+import { useReports, createReport, restoreSession } from '../../hooks/useReports';
 import { useToast } from '../ui/Toast';
 import { StatusBadge } from '../ui/StatusBadge';
 import { SourceBadge } from '../ui/SourceBadge';
 import { CivicMapView } from './CivicMapView';
+import { CityScene } from '../CityScene';
 import {
   AlertTriangle, Zap, Droplets, Trash2, Construction, HelpCircle,
   MapPin, Camera, Mic, MicOff, ChevronRight, ChevronLeft, Check,
@@ -83,14 +84,12 @@ function checkCategoryConsistency(cat: string, desc: string): ConsistencyCheck {
 interface CitizenPortalProps {
   assets: InfrastructureAsset[];
   onReportCreated: () => void;
+  currentUser?: User | null;
 }
 
-export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCreated }) => {
+export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCreated, currentUser }) => {
   const { toast } = useToast();
-  const [fontScale, setFontScale] = useState<'sm' | 'md' | 'lg'>('md');
-  const [highContrast, setHighContrast] = useState(false);
   const [step, setStep] = useState<Step>('category');
-  const [reports, setReports] = useState<CitizenReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [createdReport, setCreatedReport] = useState<CitizenReport | null>(null);
@@ -118,21 +117,12 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
   // View toggle: stepper vs my-reports
   const [view, setView] = useState<'home' | 'report' | 'my-reports' | 'map'>('home');
 
-  const scaleClass = fontScale === 'sm' ? 'citizen-font-sm' : fontScale === 'lg' ? 'citizen-font-lg' : 'citizen-font-md';
-
-  const loadReports = useCallback(async () => {
-    setLoadingReports(true);
-    try {
-      const data = await apiRequest<CitizenReport[]>('/civic/reports');
-      setReports(data);
-    } catch {
-      toast('error', 'Could not load your reports.');
-    } finally {
-      setLoadingReports(false);
-    }
-  }, [toast]);
-
-  useEffect(() => { if (view === 'my-reports') loadReports(); }, [view, loadReports]);
+  const activeUser = currentUser || restoreSession();
+  const { reports: allReports } = useReports();
+  // Data Isolation: Citizen strictly sees only their own reports matching their user ID
+  const reports = activeUser
+    ? allReports.filter(r => String(r.reporterId) === String(activeUser.id))
+    : [];
 
   /* ── Voice recognition ── */
   const startListening = () => {
@@ -230,9 +220,24 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
     fd.append('idempotency_key', idempotencyKey.current);
 
     try {
-      const created = await apiRequest<CitizenReport>('/civic/reports', { method: 'POST', body: fd });
-      setCreatedReport(created);
-      setReports(prev => [created, ...prev.filter(r => r.id !== created.id)]);
+      const activeSession = currentUser || restoreSession();
+      const payload = {
+        description: description.trim(),
+        category,
+        severity,
+        asset_id: assetId,
+        x_coord: latitude,
+        y_coord: longitude,
+        latitude,
+        longitude,
+        locationLabel: locationLabel || (latitude && longitude ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}` : 'Roorkee Sector'),
+        image_filename: imageFile ? imageFile.name : undefined,
+        reporterId: activeSession?.id,
+        username: activeSession?.username || 'Citizen',
+      };
+      
+      const created = createReport(payload);
+      setCreatedReport(created as any);
       setStep('done');
       onReportCreated();
       idempotencyKey.current = makeIdempotencyKey(); // reset for next report
@@ -273,49 +278,17 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
   const stepIdx = STEPS.indexOf(step);
 
   return (
-    <div className={`citizen-view ${scaleClass} ${highContrast ? 'high-contrast' : ''} min-h-screen bg-[var(--bg-light)]`}>
-      {/* Accessibility bar */}
-      <div className="bg-[var(--stone-light)] border-b border-[var(--stone-border)] px-4 py-2 flex items-center justify-between flex-wrap gap-2">
-        <span className="text-xs font-semibold text-[var(--text-secondary)]">Accessibility</span>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-[var(--text-muted)]">Text Size:</span>
-          {(['sm', 'md', 'lg'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setFontScale(s)}
-              className={`px-2 py-1 rounded text-xs font-bold min-w-[36px] transition-colors ${
-                fontScale === s
-                  ? 'bg-[var(--coral-strong)] text-white'
-                  : 'bg-white text-[var(--text-secondary)] border border-[var(--stone-border)]'
-              }`}
-              aria-pressed={fontScale === s}
-              aria-label={`Text size ${s === 'sm' ? 'small' : s === 'md' ? 'medium' : 'large'}`}
-            >
-              {s === 'sm' ? 'A−' : s === 'md' ? 'A' : 'A+'}
-            </button>
-          ))}
-          <button
-            onClick={() => setHighContrast(v => !v)}
-            className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
-              highContrast ? 'bg-[var(--espresso)] text-white' : 'bg-white text-[var(--text-secondary)] border border-[var(--stone-border)]'
-            }`}
-            aria-pressed={highContrast}
-            aria-label="Toggle high contrast mode"
-          >
-            High Contrast
-          </button>
-        </div>
-      </div>
+    <div className="citizen-view min-h-screen bg-[var(--bg-light)]">
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className={`${view === 'home' ? 'w-full max-w-6xl' : 'max-w-2xl'} mx-auto px-4 py-8 space-y-6`}>
         {/* Home view: 3 large actions */}
         {view === 'home' && (
           <>
-            <div className="text-center space-y-2">
+            <div className="max-w-2xl mx-auto text-center space-y-2">
               <h1 className="text-3xl font-bold text-[var(--text-primary)]">Report a Problem</h1>
               <p className="text-[var(--text-secondary)]">Help us fix issues in your neighbourhood. Simple, quick, and tracked.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 civic-cards-grid">
               {[
                 { icon: AlertTriangle, label: 'Report a Problem', desc: 'Submit a new issue', action: () => { resetForm(); setView('report'); }, id: 'home-report-btn', color: 'border-[var(--coral)] bg-[var(--coral-light)]' },
                 { icon: FileText, label: 'My Reports', desc: 'Track your submissions', action: () => setView('my-reports'), id: 'home-myreports-btn', color: 'border-[var(--sage-light)] bg-[var(--sage-light)]' },
@@ -325,15 +298,20 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
                   key={id}
                   id={id}
                   onClick={action}
-                  className={`btn-citizen border-2 ${color} rounded-xl flex flex-col items-center gap-3 p-6 hover:scale-[1.02] transition-transform text-[var(--text-primary)]`}
+                  className={`btn-citizen civic-action-card border-2 ${color} rounded-xl flex flex-col items-center gap-3 p-6 text-[var(--text-primary)]`}
                 >
-                  <Icon className="w-8 h-8 text-[var(--coral-strong)]" aria-hidden="true" />
+                  <Icon className="w-8 h-8 text-[var(--coral-strong)] civic-action-icon" aria-hidden="true" />
                   <div className="text-center">
                     <div className="font-bold">{label}</div>
                     <div className="text-sm text-[var(--text-muted)] mt-0.5">{desc}</div>
                   </div>
                 </button>
               ))}
+            </div>
+
+            {/* 3D Isometric City Digital Twin (Task 3: purely decorative, aria-hidden, pointer-events: none) */}
+            <div className="w-full mt-6">
+              <CityScene />
             </div>
           </>
         )}
@@ -683,7 +661,7 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
             </div>
             <p className="text-sm text-[var(--text-muted)]">You can track your report in <strong>My Reports</strong>.</p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <button onClick={() => { setView('my-reports'); loadReports(); }} className="btn btn-secondary">
+              <button onClick={() => setView('my-reports')} className="btn btn-secondary">
                 <FileText className="w-4 h-4" /> My Reports
               </button>
               <button id="report-another-btn" onClick={() => { resetForm(); setView('report'); }} className="btn btn-primary">
@@ -710,7 +688,15 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
               <button onClick={() => setView('home')} className="text-sm text-[var(--sage-text)] hover:text-[var(--espresso)] flex items-center gap-1">
                 <ChevronLeft className="w-4 h-4" /> Home
               </button>
-              <button onClick={loadReports} className="btn btn-ghost text-sm gap-2" disabled={loadingReports} aria-label="Refresh reports">
+              <button
+                onClick={() => {
+                  setLoadingReports(true);
+                  setTimeout(() => setLoadingReports(false), 300);
+                }}
+                className="btn btn-ghost text-sm gap-2"
+                disabled={loadingReports}
+                aria-label="Refresh reports"
+              >
                 <RefreshCw className={`w-4 h-4 ${loadingReports ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
@@ -748,8 +734,11 @@ export const CitizenPortal: React.FC<CitizenPortalProps> = ({ assets, onReportCr
                           <p className="text-sm text-[var(--text-primary)] mt-1 line-clamp-2">{rep.description}</p>
                           <div className="flex items-center gap-3 mt-2 text-xs text-[var(--text-muted)] flex-wrap">
                             <span>{new Date(rep.created_at).toLocaleDateString()}</span>
-                            {rep.x_coord !== 0 && rep.y_coord !== 0 && (
-                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location recorded</span>
+                            {(rep.locationLabel || (rep.x_coord && rep.y_coord)) && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-[var(--coral-strong)]" />
+                                {rep.locationLabel || `${Number(rep.x_coord).toFixed(4)}, ${Number(rep.y_coord).toFixed(4)}`}
+                              </span>
                             )}
                             <span className={`badge ${['', 'badge-healthy', 'badge-sage', 'badge-warning', 'badge-faulted', 'badge-critical'][rep.severity]} text-[9px]`}>
                               Severity {rep.severity}/5

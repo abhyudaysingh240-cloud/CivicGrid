@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -9,6 +9,7 @@ import ReactFlow, {
   BackgroundVariant,
   NodeMouseHandler,
   EdgeMouseHandler,
+  ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -17,7 +18,10 @@ import { BusNode } from './nodes/BusNode';
 import { DistributionPointNode } from './nodes/DistributionPointNode';
 import { LoadNode } from './nodes/LoadNode';
 import { GridNode, GridEdge, GridIsland } from '../types';
-import { Filter, Layers, Thermometer, AlertTriangle } from 'lucide-react';
+import { Filter, Layers, Thermometer, AlertTriangle, Maximize2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useReports, getNodeSectorReports, hasCriticalComplaintInSector } from '../hooks/useReports';
+import { NODE_METADATA_OVERRIDES } from '../data/gridNodes';
+import { computeSpreadLayout } from '../utils/spreadLayout';
 
 interface TopologyCanvasProps {
   nodes: GridNode[];
@@ -53,7 +57,14 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   const [filterCriticalOnly, setFilterCriticalOnly] = useState(false);
   const [filterFaultsOnly, setFilterFaultsOnly] = useState(false);
   const [filterTieOnly, setFilterTieOnly] = useState(false);
-  const [showThermalLegend, setShowThermalLegend] = useState(true);
+  // Legend starts collapsed so it never overlaps the graph
+  const [showThermalLegend, setShowThermalLegend] = useState(false);
+
+  // React Flow instance ref — used for programmatic fitView
+  const rfRef = useRef<ReactFlowInstance | null>(null);
+
+  // Subscribe to live citizen reports
+  const { reports } = useReports();
 
   // Build a set: node_code → island_id (for coloring isolated nodes)
   const islandedNodes = useMemo<Map<string, string>>(() => {
@@ -79,7 +90,13 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     return m;
   }, [islands]);
 
-  // Map backend nodes to React Flow nodes
+  // ── Spread layout: compute once per nodes array, not on every render ──────
+  const spreadPositions = useMemo(() => {
+    const rawPoints = nodes.map(n => ({ id: n.node_code, x: n.x, y: n.y }));
+    return computeSpreadLayout(rawPoints);
+  }, [nodes]);
+
+  // Map backend nodes to React Flow nodes with spread positions
   const flowNodes: Node[] = useMemo(() => {
     return nodes
       .filter((n) => {
@@ -96,10 +113,28 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
         const islandId = islandedNodes.get(n.node_code);
         const islandColor = islandId ? islandColors.get(islandId) : undefined;
 
+        // Dynamic Citizen Complaint Binding
+        const sectorReports = getNodeSectorReports(reports, n.node_code, n.name);
+        const hasCritical = hasCriticalComplaintInSector(reports, n.node_code, n.name);
+        const maxSeverity = sectorReports.reduce(
+          (max, r) => Math.max(max, Number(r.severity || 1)),
+          1
+        );
+
+        // Apply Roorkee / COER localized metadata overrides
+        const meta = NODE_METADATA_OVERRIDES[n.node_code];
+        const displayLabel = meta?.label || n.name;
+        const displayCode = meta?.displayCode || n.node_code;
+        const displayTag = meta?.tag;
+        const displayDescription = meta?.description;
+
+        // Use spread position (falls back to original if not found)
+        const pos = spreadPositions.get(n.node_code) ?? { x: n.x, y: n.y };
+
         return {
           id: n.node_code,
           type,
-          position: { x: n.x, y: n.y },
+          position: pos,
           style: islandId
             ? {
                 boxShadow: `0 0 0 3px ${islandColor}, 0 0 18px 4px ${islandColor}55`,
@@ -107,8 +142,11 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
               }
             : undefined,
           data: {
-            label: n.name,
+            label: displayLabel,
             node_code: n.node_code,
+            display_code: displayCode,
+            tag: displayTag,
+            description: displayDescription,
             nominal_voltage_kv: n.nominal_voltage_kv,
             load_mw: n.load_mw,
             criticality: n.criticality,
@@ -117,11 +155,18 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
             max_capacity_mw: n.max_capacity_mw,
             current_supply_mw: n.current_supply_mw,
             islandColor,
-            onSelect: () => onSelectNode(n),
+            hasCriticalComplaint: hasCritical,
+            complaintCount: sectorReports.length,
+            maxSeverity,
+            onSelect: () =>
+              onSelectNode({
+                ...n,
+                name: displayLabel,
+              }),
           },
         };
       });
-  }, [nodes, filterCriticalOnly, filterFaultsOnly, onSelectNode, islandedNodes, islandColors]);
+  }, [nodes, filterCriticalOnly, filterFaultsOnly, onSelectNode, islandedNodes, islandColors, reports, spreadPositions]);
 
   // Map backend edges to React Flow edges
   const flowEdges: Edge[] = useMemo(() => {
@@ -212,8 +257,16 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     [nodes, onSelectNode]
   );
 
+  const handleFitView = useCallback(() => {
+    rfRef.current?.fitView({ padding: 0.15, duration: 400 });
+  }, []);
+
   return (
-    <div className="relative w-full h-[640px] bg-charcoal-900 rounded-2xl border border-charcoal-700/80 overflow-hidden shadow-2xl">
+    // Increased height: clamp(560px, 75vh, 900px)
+    <div
+      className="relative w-full bg-charcoal-900 rounded-2xl border border-charcoal-700/80 overflow-hidden shadow-2xl"
+      style={{ height: 'clamp(560px, 75vh, 900px)' }}
+    >
       {/* Island Boundary Badges */}
       {islands.length > 0 && (
         <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 pointer-events-none">
@@ -275,31 +328,46 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
           Tie Switches Only
         </button>
 
+        {/* Thermal legend toggle — collapsed by default */}
         <button
           onClick={() => setShowThermalLegend(!showThermalLegend)}
-          className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
+          className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
             showThermalLegend
               ? 'bg-orange-500/20 text-orange-300 border border-orange-500/50'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
+          aria-expanded={showThermalLegend}
+          aria-label="Toggle thermal legend"
         >
-          <Thermometer className="w-3 h-3 inline mr-1" />
-          Thermal Load
+          <Thermometer className="w-3 h-3" />
+          Thermal
+          {showThermalLegend ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
+
+        {/* Fit-view button */}
+        <button
+          onClick={handleFitView}
+          title="Fit view to all nodes"
+          aria-label="Fit view to all nodes"
+          className="px-2.5 py-1 text-xs rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all flex items-center gap-1"
+        >
+          <Maximize2 className="w-3 h-3" />
+          Fit
         </button>
       </div>
 
-      {/* Thermal Load Legend */}
+      {/* Thermal Load Legend — docked bottom-left, collapsible, never overlaps nodes */}
       {showThermalLegend && (
-        <div className="absolute bottom-3 left-3 z-10 hidden sm:flex flex-col gap-1.5 bg-charcoal-950/90 backdrop-blur-md px-3 py-2.5 rounded-xl border border-charcoal-700/60 shadow-xl">
+        <div className="absolute bottom-10 left-3 z-20 flex flex-col gap-1.5 bg-charcoal-950/95 backdrop-blur-md px-3 py-2.5 rounded-xl border border-charcoal-700/60 shadow-xl pointer-events-none">
           <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-1">
             Thermal Utilization
           </div>
           {[
-            { color: '#6366f1', label: '< 25% — Light', bg: 'bg-indigo-500/20' },
-            { color: '#38bdf8', label: '25–50% — Normal', bg: 'bg-sky-500/20' },
-            { color: '#f59e0b', label: '50–70% — Moderate', bg: 'bg-amber-500/20' },
-            { color: '#f97316', label: '70–90% — High', bg: 'bg-orange-500/20' },
-            { color: '#ef4444', label: '≥ 90% — Critical', bg: 'bg-red-500/20' },
+            { color: '#6366f1', label: '< 25% — Light' },
+            { color: '#38bdf8', label: '25–50% — Normal' },
+            { color: '#f59e0b', label: '50–70% — Moderate' },
+            { color: '#f97316', label: '70–90% — High' },
+            { color: '#ef4444', label: '≥ 90% — Critical' },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
               <div className="w-5 h-1.5 rounded-full" style={{ background: color }} />
@@ -327,9 +395,11 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
+        onInit={(instance) => { rfRef.current = instance; }}
         fitView
-        minZoom={0.2}
-        maxZoom={2.0}
+        fitViewOptions={{ padding: 0.15 }}
+        minZoom={0.15}
+        maxZoom={2.5}
         attributionPosition="bottom-right"
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#334155" />
@@ -343,6 +413,7 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
           }}
           maskColor="rgba(7, 10, 17, 0.75)"
           className="!bg-charcoal-900 !border-charcoal-700 !rounded-xl"
+          style={{ bottom: 8, right: 8 }}
         />
       </ReactFlow>
     </div>

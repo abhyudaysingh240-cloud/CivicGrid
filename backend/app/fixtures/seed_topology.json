@@ -5,21 +5,21 @@
   "nodes": [
     {
       "node_code": "SUB_NORTH",
-      "name": "North Central Substation (132/11kV)",
+      "name": "220kV PTCUL Substation Roorkee",
       "node_type": "SUBSTATION",
-      "nominal_voltage_kv": 132.0,
+      "nominal_voltage_kv": 220.0,
       "load_mw": 0.0,
       "criticality": 5,
       "x": 200.0,
-      "y": 100.0,
+      "y": 80.0,
       "max_capacity_mw": 45.0,
       "current_supply_mw": 14.5
     },
     {
       "node_code": "SUB_SOUTH",
-      "name": "South Harbor Substation (132/11kV)",
+      "name": "220/33kV Substation Piran Kaliyar",
       "node_type": "SUBSTATION",
-      "nominal_voltage_kv": 132.0,
+      "nominal_voltage_kv": 220.0,
       "load_mw": 0.0,
       "criticality": 5,
       "x": 200.0,
@@ -29,189 +29,189 @@
     },
     {
       "node_code": "SUB_EAST",
-      "name": "East River Substation (132/11kV)",
+      "name": "132kV Bhagwanpur Substation",
       "node_type": "SUBSTATION",
       "nominal_voltage_kv": 132.0,
       "load_mw": 0.0,
       "criticality": 5,
       "x": 800.0,
-      "y": 380.0,
+      "y": 370.0,
       "max_capacity_mw": 30.0,
       "current_supply_mw": 6.5
     },
     {
       "node_code": "BUS_N1",
-      "name": "North Feeder Bus 1",
+      "name": "PTCUL Roorkee Feeder Bus 1 (North)",
       "node_type": "BUS",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.0,
       "criticality": 4,
       "x": 200.0,
-      "y": 180.0
+      "y": 170.0
     },
     {
       "node_code": "BUS_N2",
-      "name": "North Feeder Bus 2",
+      "name": "Civil Lines / Hospital Feeder Bus 2",
       "node_type": "BUS",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.0,
       "criticality": 3,
       "x": 380.0,
-      "y": 180.0
+      "y": 170.0
     },
     {
       "node_code": "DP_N1",
-      "name": "Distribution Point Civic Center",
+      "name": "DP - Vardhmanpuram Feeder",
       "node_type": "DISTRIBUTION_POINT",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.2,
       "criticality": 4,
       "x": 200.0,
-      "y": 280.0
+      "y": 270.0
     },
     {
       "node_code": "DP_N2",
-      "name": "Distribution Point Medical Hub",
+      "name": "DP - Vardhmanpuram Feeder",
       "node_type": "DISTRIBUTION_POINT",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.3,
       "criticality": 5,
-      "x": 350.0,
-      "y": 280.0
+      "x": 380.0,
+      "y": 270.0
     },
     {
       "node_code": "LOAD_HOSPITAL",
-      "name": "Metropolitan Trauma Hospital",
+      "name": "Civil Hospital Roorkee / Trauma Unit",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 3.8,
       "criticality": 5,
-      "x": 480.0,
-      "y": 280.0
+      "x": 520.0,
+      "y": 270.0
     },
     {
       "node_code": "LOAD_CITY_HALL",
-      "name": "Civic Administration Complex",
+      "name": "Roorkee Municipal Corporation (Nagar Nigam)",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 2.2,
       "criticality": 4,
-      "x": 100.0,
-      "y": 280.0
+      "x": 60.0,
+      "y": 270.0
     },
     {
       "node_code": "LOAD_NORTH_RES_1",
-      "name": "Highland Residential Sector A",
+      "name": "Highland & Vardhmanpuram Residential",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 2.5,
       "criticality": 2,
       "x": 200.0,
-      "y": 380.0
+      "y": 370.0
     },
     {
       "node_code": "LOAD_NORTH_COMM_1",
-      "name": "Northside Commercial Plaza",
+      "name": "Vardhmanpuram Commercial Sector",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 3.1,
       "criticality": 3,
-      "x": 350.0,
-      "y": 380.0
+      "x": 340.0,
+      "y": 370.0
     },
     {
       "node_code": "BUS_S1",
-      "name": "South Feeder Bus 1",
+      "name": "Piran Kaliyar Primary Bus 1",
       "node_type": "BUS",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.0,
       "criticality": 4,
       "x": 200.0,
-      "y": 570.0
+      "y": 560.0
     },
     {
       "node_code": "BUS_S2",
-      "name": "South Feeder Bus 2",
+      "name": "Roorkee Industrial Feeder Bus 2",
       "node_type": "BUS",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.0,
       "criticality": 3,
       "x": 380.0,
-      "y": 570.0
+      "y": 560.0
     },
     {
       "node_code": "DP_S1",
-      "name": "Distribution Point Harbor Logistics",
+      "name": "DP - Roorkee Industrial Area",
       "node_type": "DISTRIBUTION_POINT",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.4,
       "criticality": 4,
       "x": 200.0,
-      "y": 480.0
+      "y": 470.0
     },
     {
       "node_code": "DP_S2",
-      "name": "Distribution Point Marina Quarter",
+      "name": "DP - Roorkee Industrial Area",
       "node_type": "DISTRIBUTION_POINT",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.3,
       "criticality": 3,
       "x": 380.0,
-      "y": 480.0
+      "y": 470.0
     },
     {
       "node_code": "LOAD_WATER_TREATMENT",
-      "name": "Metro Water Pumping Plant",
+      "name": "Upper Ganga Canal Pumping Station",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 4.2,
       "criticality": 5,
-      "x": 100.0,
-      "y": 480.0
+      "x": 60.0,
+      "y": 470.0
     },
     {
       "node_code": "LOAD_SOUTH_RES_1",
-      "name": "Harborview Residential Sector",
+      "name": "Civil Lines Residential Sector",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 2.8,
       "criticality": 2,
-      "x": 500.0,
-      "y": 570.0
+      "x": 520.0,
+      "y": 560.0
     },
     {
       "node_code": "LOAD_SOUTH_IND_1",
-      "name": "South Port Cold Storage & Freight",
+      "name": "Roorkee Industrial Area - Heavy Power Feeder",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 3.9,
       "criticality": 3,
       "x": 380.0,
-      "y": 400.0
+      "y": 370.0
     },
     {
       "node_code": "BUS_E1",
-      "name": "East Grid Feeder Bus",
+      "name": "Bhagwanpur Regional Feeder Bus",
       "node_type": "BUS",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.0,
       "criticality": 3,
       "x": 680.0,
-      "y": 380.0
+      "y": 370.0
     },
     {
       "node_code": "DP_E1",
-      "name": "Distribution Point Tech Park",
+      "name": "DP - Roorkee Cantt / Civil Lines",
       "node_type": "DISTRIBUTION_POINT",
       "nominal_voltage_kv": 11.0,
       "load_mw": 0.2,
       "criticality": 4,
       "x": 560.0,
-      "y": 380.0
+      "y": 370.0
     },
     {
       "node_code": "LOAD_TECH_CAMPUS",
-      "name": "Eastside Data Center Campus",
+      "name": "IIT Roorkee Research Grid",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 4.5,
@@ -221,7 +221,7 @@
     },
     {
       "node_code": "LOAD_EAST_RES_1",
-      "name": "Riverside Apartments",
+      "name": "Ganga Canal Riverside Enclave",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 1.8,
@@ -231,23 +231,23 @@
     },
     {
       "node_code": "LOAD_TRANSIT_SUB",
-      "name": "Central Metro Transit Substation",
+      "name": "Roorkee Junction Railway Transit Hub",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 2.9,
       "criticality": 4,
-      "x": 480.0,
-      "y": 180.0
+      "x": 520.0,
+      "y": 170.0
     },
     {
       "node_code": "LOAD_UNIVERSITY",
-      "name": "State University Campus",
+      "name": "COER University Campus",
       "node_type": "LOAD_POINT",
       "nominal_voltage_kv": 0.415,
       "load_mw": 2.1,
-      "criticality": 2,
-      "x": 100.0,
-      "y": 380.0
+      "criticality": 5,
+      "x": 60.0,
+      "y": 370.0
     }
   ],
   "edges": [
@@ -586,7 +586,7 @@
   "infrastructure_assets": [
     {
       "asset_code": "ASSET_SUB_NORTH",
-      "name": "North Primary Substation 132kV",
+      "name": "220kV PTCUL Primary Substation Roorkee",
       "asset_type": "SUBSTATION",
       "grid_node_code": "SUB_NORTH",
       "x_coord": 200.0,
@@ -599,7 +599,7 @@
     },
     {
       "asset_code": "ASSET_SUB_SOUTH",
-      "name": "South Primary Substation 132kV",
+      "name": "220/33kV Piran Kaliyar Primary Substation",
       "asset_type": "SUBSTATION",
       "grid_node_code": "SUB_SOUTH",
       "x_coord": 200.0,
@@ -612,7 +612,7 @@
     },
     {
       "asset_code": "ASSET_SUB_EAST",
-      "name": "East River Substation 132kV",
+      "name": "132kV Bhagwanpur Substation",
       "asset_type": "SUBSTATION",
       "grid_node_code": "SUB_EAST",
       "x_coord": 800.0,
@@ -625,7 +625,7 @@
     },
     {
       "asset_code": "ASSET_DP_N1",
-      "name": "Civic Center Feeder Pillar 11kV",
+      "name": "Vardhmanpuram Feeder Pillar 11kV",
       "asset_type": "FEEDER_PILLAR",
       "grid_node_code": "DP_N1",
       "x_coord": 200.0,
@@ -638,7 +638,7 @@
     },
     {
       "asset_code": "ASSET_DP_N2",
-      "name": "Medical District Transformer Vault",
+      "name": "Roorkee Cantt / Civil Lines Transformer Vault",
       "asset_type": "TRANSFORMER",
       "grid_node_code": "DP_N2",
       "x_coord": 350.0,
@@ -651,7 +651,7 @@
     },
     {
       "asset_code": "ASSET_DP_S1",
-      "name": "Harbor Logistics Distribution Point",
+      "name": "Roorkee Industrial Area Distribution Point",
       "asset_type": "FEEDER_PILLAR",
       "grid_node_code": "DP_S1",
       "x_coord": 200.0,
@@ -664,7 +664,7 @@
     },
     {
       "asset_code": "ASSET_DP_S2",
-      "name": "Marina Junction Switchgear",
+      "name": "Piran Kaliyar Junction Switchgear",
       "asset_type": "CABLE_JUNCTION",
       "grid_node_code": "DP_S2",
       "x_coord": 380.0,
@@ -677,7 +677,7 @@
     },
     {
       "asset_code": "ASSET_DP_E1",
-      "name": "Innovation Tech Park Transformer",
+      "name": "Bhagwanpur Tech & Research Hub Transformer",
       "asset_type": "TRANSFORMER",
       "grid_node_code": "DP_E1",
       "x_coord": 560.0,
@@ -685,6 +685,19 @@
       "criticality": 4,
       "installation_year": 2019,
       "current_risk_score": 15.0,
+      "current_risk_level": "LOW",
+      "status": "OPERATIONAL"
+    },
+    {
+      "asset_code": "ASSET_LOAD_UNIVERSITY",
+      "name": "COER University Campus Power Sub-Station",
+      "asset_type": "TRANSFORMER",
+      "grid_node_code": "LOAD_UNIVERSITY",
+      "x_coord": 100.0,
+      "y_coord": 380.0,
+      "criticality": 5,
+      "installation_year": 2021,
+      "current_risk_score": 10.0,
       "current_risk_level": "LOW",
       "status": "OPERATIONAL"
     }

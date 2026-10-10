@@ -6,32 +6,32 @@ from backend.app.models.models import GridEdge, User
 SCENARIOS_CATALOG = {
     "A": {
         "code": "A",
-        "name": "Normal Operation",
-        "description": "Baseline healthy grid state. All radial feeders energized, all tie switches open.",
-        "expected_outcome": "NORMAL state, 0 faults, 100% restoration, 0 MW unserved."
+        "name": "Baseline Healthy Grid - Roorkee Substation Operating Nominal",
+        "description": "220kV PTCUL Roorkee Substation operating nominal. All radial feeders energized, all tie switches open.",
+        "expected_outcome": "NORMAL state, 0 faults, 100% restoration, 0 MW unserved across Roorkee & COER campus."
     },
     "B": {
         "code": "B",
-        "name": "Single Line Failure -> Full Self-Healing",
-        "description": "Trip line LINE_BUS_N1_DP_N1 isolating Civic Center & Highland Res. Auto-healed via tie TIE_N1_S1 from South Substation.",
-        "expected_outcome": "RESTORED state, 100% restoration, 4.9 MW restored via tie switch."
+        "name": "Line Fault: Piran Kaliyar → COER Feeder Isolated (Auto-Rerouting Active)",
+        "description": "Trip line LINE_BUS_N1_DP_N1 isolating Vardhmanpuram & COER University Campus feeder. Auto-healed via tie TIE_N1_S1 from 220/33kV Piran Kaliyar Substation.",
+        "expected_outcome": "RESTORED state, 100% restoration, 4.9 MW restored via tie switch to COER Campus & Vardhmanpuram."
     },
     "C": {
         "code": "C",
-        "name": "Capacity Overload / Infeasible Restoration",
-        "description": "Trip line LINE_BUS_N2_DP_N2 feeding 7.2 MW medical/commercial loads. Available tie switch TIE_N2_S2_BOTTLENECK thermal limit is only 2.5 MW, causing capacity rejection.",
-        "expected_outcome": "RECONFIGURATION_FAILED, Honest unserved load accounting, partial restoration prioritizing hospital."
+        "name": "Capacity Overload: Industrial Area & Ganga Pumping Station",
+        "description": "Trip line LINE_BUS_N2_DP_N2 feeding 7.2 MW Civil Hospital trauma and commercial loads. Available tie switch TIE_N2_S2_BOTTLENECK thermal limit is 2.5 MW, triggering automated load prioritization.",
+        "expected_outcome": "RECONFIGURATION_FAILED, Honest unserved load accounting, partial restoration prioritizing Civil Hospital & Emergency Life-Support."
     },
     "D": {
         "code": "D",
-        "name": "Multi-Incident Emergency",
-        "description": "Simultaneous severe weather event trips line LINE_SUB_N_BUS_N1 and generates clustered municipal infrastructure damage reports in North Sector.",
-        "expected_outcome": "ISLANDED / Restored via South tie + Elevated civic emergency priority."
+        "name": "Multi-Incident Emergency: Roorkee North Sector Outage",
+        "description": "Simultaneous severe storm event trips line LINE_SUB_N_BUS_N1 at 220kV PTCUL Substation and generates clustered municipal infrastructure damage reports in North Sector / Civil Lines.",
+        "expected_outcome": "ISLANDED / Restored via South tie + Elevated civic emergency priority dispatched to field staff."
     },
     "E": {
         "code": "E",
-        "name": "Cascading Line Trip After Reconfiguration",
-        "description": "After restoring through tie TIE_N1_S1, downstream trunk line LINE_SUB_S_BUS_S1 trips under combined load, triggering secondary emergency isolation.",
+        "name": "Cascading Line Trip After Reconfiguration: Bhagwanpur Interconnect",
+        "description": "After restoring through tie TIE_N1_S1, downstream trunk line LINE_SUB_S_BUS_S1 trips under combined load, triggering secondary emergency isolation across Bhagwanpur Interconnect.",
         "expected_outcome": "Secondary island detection, cascading alert triggered, operator intervention required."
     }
 }
@@ -43,11 +43,11 @@ def serialize_state(state) -> Optional[Dict[str, Any]]:
         "id": state.id,
         "timestamp": state.timestamp.isoformat() if hasattr(state.timestamp, "isoformat") else str(state.timestamp),
         "state_enum": state.state_enum,
-        "total_load_mw": float(state.total_load_mw),
-        "affected_load_mw": float(state.affected_load_mw),
-        "restored_load_mw": float(state.restored_load_mw),
-        "unserved_load_mw": float(state.unserved_load_mw),
-        "restoration_pct": float(state.restoration_pct),
+        "total_load_mw": float(state.total_load_mw or 0.0),
+        "affected_load_mw": float(state.affected_load_mw or 0.0),
+        "restored_load_mw": float(state.restored_load_mw or 0.0),
+        "unserved_load_mw": float(state.unserved_load_mw or 0.0),
+        "restoration_pct": float(state.restoration_pct) if state.restoration_pct is not None else None,
         "active_fault_edge_id": state.active_fault_edge_id,
         "closed_tie_edge_id": state.closed_tie_edge_id,
         "details_json": state.details_json,

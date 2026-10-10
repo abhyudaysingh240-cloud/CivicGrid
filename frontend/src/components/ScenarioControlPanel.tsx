@@ -2,6 +2,56 @@ import React, { useState } from 'react';
 import { Scenario, GridEdge } from '../types';
 import { Play, RotateCcw, Zap, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
+/** Roorkee-localized branch lines for manual fault injection.
+ *  Each `realEdgeCode` maps to the actual edge_code used by the simulation engine. */
+export const ROORKEE_BRANCH_LINES: { id: string; label: string; realEdgeCode: string }[] = [
+  {
+    id: 'LINE_COER_CAMPUS',
+    label: 'LINE_COER_CAMPUS — 220kV Substation → COER University Campus Feeder (2.1 MW)',
+    realEdgeCode: 'LINE_DP_N1_UNIV',
+  },
+  {
+    id: 'LINE_KALIYAR_TRUNK',
+    label: 'LINE_KALIYAR_TRUNK — Piran Kaliyar Substation Main Feeder Bus N2 (7.2 MW)',
+    realEdgeCode: 'LINE_BUS_N2_DP_N2',
+  },
+  {
+    id: 'LINE_CIVIL_HOSPITAL',
+    label: 'LINE_CIVIL_HOSPITAL — DP Civil Lines → Civil Hospital Trauma Unit (3.8 MW)',
+    realEdgeCode: 'LINE_DP_N2_HOSPITAL',
+  },
+  {
+    id: 'LINE_RAILWAY_TRANSIT',
+    label: 'LINE_RAILWAY_TRANSIT — PTCUL Substation → Roorkee Railway Junction Hub (2.9 MW)',
+    realEdgeCode: 'LINE_BUS_N2_TRANSIT',
+  },
+  {
+    id: 'LINE_GANGA_PUMPING',
+    label: 'LINE_GANGA_PUMPING — DP Industrial → Upper Ganga Canal Pumping Station (4.2 MW)',
+    realEdgeCode: 'LINE_DP_S1_WATER',
+  },
+  {
+    id: 'LINE_NAGAR_NIGAM',
+    label: 'LINE_NAGAR_NIGAM — DP Vardhmanpuram → Roorkee Municipal Corporation (2.2 MW)',
+    realEdgeCode: 'LINE_DP_N1_CITY_HALL',
+  },
+  {
+    id: 'LINE_IIT_RESEARCH',
+    label: 'LINE_IIT_RESEARCH — DP Tech Park → IIT Roorkee Research Grid (4.5 MW)',
+    realEdgeCode: 'LINE_DP_E1_TECH',
+  },
+  {
+    id: 'LINE_CIVIL_LINES_RES',
+    label: 'LINE_CIVIL_LINES_RES — Bus S2 → Civil Lines Residential Sector (2.8 MW)',
+    realEdgeCode: 'LINE_BUS_S2_RES1',
+  },
+  {
+    id: 'LINE_BHAGWANPUR_TRUNK',
+    label: 'LINE_BHAGWANPUR_TRUNK — 132kV Bhagwanpur Substation Main Feeder Bus E1 (6.5 MW)',
+    realEdgeCode: 'LINE_SUB_E_BUS_E1',
+  },
+];
+
 interface ScenarioControlPanelProps {
   scenarios: Scenario[];
   edges: GridEdge[];
@@ -19,6 +69,7 @@ export const ScenarioControlPanel: React.FC<ScenarioControlPanelProps> = ({
   onInjectFault,
   loading,
 }) => {
+  // Stores the *display* id (e.g. 'LINE_COER_CAMPUS') – resolved to a real edge_code on inject
   const [selectedEdge, setSelectedEdge] = useState('');
   const [runningCode, setRunningCode] = useState<string | null>(null);
 
@@ -33,7 +84,10 @@ export const ScenarioControlPanel: React.FC<ScenarioControlPanelProps> = ({
 
   const handleManualFault = async () => {
     if (!selectedEdge) return;
-    await onInjectFault(selectedEdge);
+    // Resolve display-id → real edge_code for the simulation engine
+    const match = ROORKEE_BRANCH_LINES.find((l) => l.id === selectedEdge);
+    const realCode = match ? match.realEdgeCode : selectedEdge;
+    await onInjectFault(realCode);
     setSelectedEdge('');
   };
 
@@ -83,7 +137,10 @@ export const ScenarioControlPanel: React.FC<ScenarioControlPanelProps> = ({
 
               <div className="mt-3 pt-2 border-t border-charcoal-800/80">
                 <button
-                  onClick={() => handleRun(sc.scenario_code)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRun(sc.code ?? sc.scenario_code);
+                  }}
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-mono font-semibold bg-electric-500/15 hover:bg-electric-500/30 text-electric-300 border border-electric-500/40 transition-all disabled:opacity-50"
                 >
@@ -107,16 +164,14 @@ export const ScenarioControlPanel: React.FC<ScenarioControlPanelProps> = ({
           <select
             value={selectedEdge}
             onChange={(e) => setSelectedEdge(e.target.value)}
-            className="bg-charcoal-800 border border-charcoal-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-electric-400"
+            className="bg-charcoal-800 border border-charcoal-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-electric-400 min-w-[26rem] max-w-full"
           >
-            <option value="">Select branch line to trip...</option>
-            {edges
-              .filter((e) => !e.is_tie_switch && e.status === 'OPERATIONAL')
-              .map((e) => (
-                <option key={e.edge_code} value={e.edge_code}>
-                  {e.edge_code} ({e.name} - {e.current_load_mw.toFixed(1)} MW)
-                </option>
-              ))}
+            <option value="">⚡ Select Roorkee feeder line to trip...</option>
+            {ROORKEE_BRANCH_LINES.map((line) => (
+              <option key={line.id} value={line.id}>
+                {line.label}
+              </option>
+            ))}
           </select>
 
           <button

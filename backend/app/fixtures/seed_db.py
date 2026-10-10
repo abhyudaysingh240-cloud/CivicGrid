@@ -99,6 +99,12 @@ def seed_database(db: Session = None, seed_demo_users: bool = None, user_passwor
                 db.flush()
                 node_map[n["node_code"]] = node.id
             else:
+                existing.name = n["name"]
+                existing.x = n.get("x", existing.x)
+                existing.y = n.get("y", existing.y)
+                existing.nominal_voltage_kv = n.get("nominal_voltage_kv", existing.nominal_voltage_kv)
+                existing.max_capacity_mw = n.get("max_capacity_mw", existing.max_capacity_mw)
+                existing.current_supply_mw = n.get("current_supply_mw", existing.current_supply_mw)
                 node_map[n["node_code"]] = existing.id
 
         # 4. Seed Grid Edges
@@ -162,11 +168,11 @@ def seed_database(db: Session = None, seed_demo_users: bool = None, user_passwor
 
         # 7. Seed Scenarios
         scenarios = [
-            ("A", "Normal operation", "Baseline healthy grid state.", False, [], "NORMAL state, 0 faults."),
-            ("B", "Single line failure -> full restoration", "Trip LINE_BUS_N1_DP_N1, restored via TIE_N1_S1.", False, ["LINE_BUS_N1_DP_N1"], "RESTORED state, 100% restoration."),
-            ("C", "No feasible restoration", "Trip LINE_BUS_N2_DP_N2 with tie bottleneck.", False, ["LINE_BUS_N2_DP_N2"], "RECONFIGURATION_FAILED, honest unserved load accounting."),
-            ("D", "Multi-incident emergency", "Trip LINE_BUS_N1_DP_N1 plus clustered civic damages.", False, ["LINE_BUS_N1_DP_N1"], "ISLANDED / Restored + Elevated civic priority."),
-            ("E", "Cascading isolation", "Trip LINE_BUS_N1_DP_N1 then second trunk line trips.", False, ["LINE_BUS_N1_DP_N1", "LINE_SUB_S_BUS_S1"], "Cascading isolation handled.")
+            ("A", "Baseline Healthy Grid - Roorkee Substation Operating Nominal", "220kV PTCUL Roorkee Substation operating nominal. All radial feeders energized, all tie switches open.", False, [], "NORMAL state, 0 faults, 100% restoration, 0 MW unserved across Roorkee & COER campus."),
+            ("B", "Line Fault: Piran Kaliyar → COER Feeder Isolated (Auto-Rerouting Active)", "Trip line LINE_BUS_N1_DP_N1 isolating Vardhmanpuram & COER University Campus feeder. Auto-healed via tie TIE_N1_S1 from 220/33kV Piran Kaliyar Substation.", False, ["LINE_BUS_N1_DP_N1"], "RESTORED state, 100% restoration, 4.9 MW restored via tie switch to COER Campus & Vardhmanpuram."),
+            ("C", "Capacity Overload: Industrial Area & Ganga Pumping Station", "Trip line LINE_BUS_N2_DP_N2 feeding 7.2 MW Civil Hospital trauma and commercial loads. Available tie switch TIE_N2_S2_BOTTLENECK thermal limit is 2.5 MW, triggering automated load prioritization.", False, ["LINE_BUS_N2_DP_N2"], "RECONFIGURATION_FAILED, Honest unserved load accounting, partial restoration prioritizing Civil Hospital & Emergency Life-Support."),
+            ("D", "Multi-Incident Emergency: Roorkee North Sector Outage", "Simultaneous severe storm event trips line LINE_SUB_N_BUS_N1 at 220kV PTCUL Substation and generates clustered municipal infrastructure damage reports in North Sector / Civil Lines.", False, ["LINE_SUB_N_BUS_N1"], "ISLANDED / Restored via South tie + Elevated civic emergency priority dispatched to field staff."),
+            ("E", "Cascading Line Trip After Reconfiguration: Bhagwanpur Interconnect", "After restoring through tie TIE_N1_S1, downstream trunk line LINE_SUB_S_BUS_S1 trips under combined load, triggering secondary emergency isolation across Bhagwanpur Interconnect.", False, ["LINE_BUS_N1_DP_N1", "LINE_SUB_S_BUS_S1"], "Secondary island detection, cascading alert triggered, operator intervention required.")
         ]
         for sc in scenarios:
             existing = db.query(Scenario).filter(Scenario.scenario_code == sc[0]).first()
@@ -179,7 +185,10 @@ def seed_database(db: Session = None, seed_demo_users: bool = None, user_passwor
                     initial_fault_edges_json=sc[4],
                     expected_outcome=sc[5]
                 ))
-
+            else:
+                existing.name = sc[1]
+                existing.description = sc[2]
+                existing.expected_outcome = sc[5]
         db.commit()
     finally:
         if own_session:

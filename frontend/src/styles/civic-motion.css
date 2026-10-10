@@ -1,0 +1,379 @@
+/* ============================================================
+   CIVICGRID MOTION & TYPOGRAPHY POLISH
+   Additive styles for Citizen Portal & Auth Terminal
+   ============================================================ */
+
+/* ─── TASK 1: Action Boxes Motion ─── */
+
+@keyframes civicCardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.civic-cards-grid > :nth-child(1) {
+  animation: civicCardEntrance 320ms cubic-bezier(0, 0, 0.2, 1) 0ms both;
+}
+
+.civic-cards-grid > :nth-child(2) {
+  animation: civicCardEntrance 320ms cubic-bezier(0, 0, 0.2, 1) 80ms both;
+}
+
+.civic-cards-grid > :nth-child(3) {
+  animation: civicCardEntrance 320ms cubic-bezier(0, 0, 0.2, 1) 160ms both;
+}
+
+.civic-action-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 280ms cubic-bezier(0, 0, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0, 0, 0.2, 1),
+    border-color 280ms cubic-bezier(0, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/* Hover / Focus-visible: lift, scale, soft growing shadow, thin accent border/glow */
+.civic-action-card:hover,
+.civic-action-card:focus-visible {
+  transform: translateY(-6px) scale(1.03);
+  border-color: var(--coral-strong) !important;
+  box-shadow:
+    0 16px 32px -8px rgba(59, 47, 47, 0.16),
+    0 6px 12px -3px rgba(59, 47, 47, 0.08),
+    0 0 0 1px var(--coral-strong),
+    0 0 20px rgba(192, 57, 43, 0.22);
+}
+
+/* Icon bob / gentle rotation on card hover */
+.civic-action-card .civic-action-icon {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.civic-action-card:hover .civic-action-icon,
+.civic-action-card:focus-visible .civic-action-icon {
+  transform: translateY(-3px) rotate(5deg) scale(1.08);
+}
+
+/* Subtle shine / gradient sweep across card on hover */
+.civic-action-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -80%;
+  width: 50%;
+  height: 220%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 25%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 75%,
+    transparent 100%
+  );
+  transform: rotate(25deg) translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 250ms ease;
+  will-change: transform, opacity;
+}
+
+.civic-action-card:hover::after,
+.civic-action-card:focus-visible::after {
+  opacity: 1;
+  transform: rotate(25deg) translateX(420%);
+}
+
+
+/* ─── TASK 2: Sign In / Register Terminal Polish ─── */
+
+/* Monospace font stack scoped specifically to the auth terminal */
+.auth-terminal {
+  font-family: 'Space Mono', 'IBM Plex Mono', 'JetBrains Mono', 'Courier New', monospace;
+  letter-spacing: 0.03em;
+}
+
+.auth-terminal h2,
+.auth-terminal label,
+.auth-terminal input,
+.auth-terminal button,
+.auth-terminal span {
+  font-family: 'Space Mono', 'IBM Plex Mono', 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.auth-terminal label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  transition: color 200ms ease, transform 200ms ease;
+}
+
+/* Panel entrance: fade + slide-up with blur-to-sharp */
+@keyframes authPanelEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.auth-panel-enter {
+  animation: authPanelEntrance 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered entrance for fields inside auth-terminal */
+@keyframes authFieldEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-terminal .auth-field-1 {
+  animation: authFieldEntrance 240ms cubic-bezier(0, 0, 0.2, 1) 100ms both;
+}
+
+.auth-terminal .auth-field-2 {
+  animation: authFieldEntrance 240ms cubic-bezier(0, 0, 0.2, 1) 200ms both;
+}
+
+.auth-terminal .auth-field-3 {
+  animation: authFieldEntrance 240ms cubic-bezier(0, 0, 0.2, 1) 300ms both;
+}
+
+.auth-terminal .auth-field-submit {
+  animation: authFieldEntrance 240ms cubic-bezier(0, 0, 0.2, 1) 400ms both;
+}
+
+/* Typewriter heading with blinking cursor that stops */
+@keyframes typewriterReveal {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 100%;
+  }
+}
+
+@keyframes cursorBlink {
+  0%, 100% {
+    border-right-color: var(--coral-strong, #C0392B);
+  }
+  50% {
+    border-right-color: transparent;
+  }
+}
+
+@keyframes cursorStop {
+  to {
+    border-right-color: transparent;
+  }
+}
+
+.auth-terminal .typewriter-heading {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  border-right: 2px solid var(--coral-strong, #C0392B);
+  animation:
+    typewriterReveal 850ms steps(26, end) 80ms forwards,
+    cursorBlink 350ms step-end 4 80ms forwards,
+    cursorStop 1ms linear 1550ms forwards;
+}
+
+/* Input focus: animated glow in accent color and label shift */
+.auth-terminal input {
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.auth-terminal input:focus {
+  border-color: var(--coral-strong, #C0392B) !important;
+  box-shadow:
+    0 0 0 1px var(--coral-strong, #C0392B),
+    0 0 14px rgba(192, 57, 43, 0.38) !important;
+}
+
+.auth-terminal .auth-field-group:focus-within label {
+  color: #F4AFA5 !important;
+  transform: translateX(2px);
+}
+
+/* Submit button: hover glow plus subtle press effect */
+.auth-terminal button[type="submit"] {
+  letter-spacing: 0.05em;
+  transition:
+    transform 160ms cubic-bezier(0, 0, 0.2, 1),
+    box-shadow 200ms ease,
+    background-color 200ms ease;
+  will-change: transform;
+}
+
+.auth-terminal button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 0 20px rgba(192, 57, 43, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.auth-terminal button[type="submit"]:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 0 0 8px rgba(192, 57, 43, 0.3);
+}
+
+
+/* ─── TASK 3: CityScene Isometric Animations ─── */
+
+@keyframes cityBuildingRise {
+  0% {
+    opacity: 0;
+    transform: translateY(35px) scaleY(0.1);
+    transform-origin: bottom center;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    transform-origin: bottom center;
+  }
+}
+
+.city-bldg {
+  animation: cityBuildingRise 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Route line animated drawing */
+@keyframes cityRouteDraw {
+  0% {
+    stroke-dashoffset: 1400;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.city-route-line {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: cityRouteDraw 2.6s cubic-bezier(0.4, 0, 0.2, 1) 250ms forwards;
+}
+
+/* Route pulse glow */
+@keyframes cityPulsePing {
+  0% {
+    r: 4;
+    opacity: 0.95;
+  }
+  70% {
+    r: 16;
+    opacity: 0;
+  }
+  100% {
+    r: 16;
+    opacity: 0;
+  }
+}
+
+.city-pulse-ring {
+  animation: cityPulsePing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Responsive Panel Sizing: min-height 460px with clamp(420px, 55vh, 640px) on md+, ~300px on mobile */
+.city-scene-panel {
+  min-height: 300px;
+  height: clamp(300px, 45vh, 380px);
+}
+
+@media (min-width: 768px) {
+  .city-scene-panel {
+    min-height: 460px;
+    height: clamp(420px, 55vh, 640px);
+  }
+}
+
+/* Floating bob for marker / data cube */
+@keyframes cityBobFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.city-float-elem {
+  animation: cityBobFloat 3.6s ease-in-out infinite;
+}
+
+.city-float-elem-slow {
+  animation: cityBobFloat 4.8s ease-in-out 1.2s infinite;
+}
+
+/* Slow ambient drift on scene wrapper */
+@keyframes cityAmbientGlow {
+  0%, 100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.city-ambient-glow {
+  animation: cityAmbientGlow 4s ease-in-out infinite;
+}
+
+
+/* ─── Accessibility & Reduced Motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  .civic-action-card,
+  .civic-action-card:hover,
+  .civic-action-card:focus-visible,
+  .civic-action-icon,
+  .civic-action-card::after,
+  .auth-panel-enter,
+  .auth-terminal .auth-field-1,
+  .auth-terminal .auth-field-2,
+  .auth-terminal .auth-field-3,
+  .auth-terminal .auth-field-submit,
+  .auth-terminal .typewriter-heading,
+  .auth-terminal input,
+  .auth-terminal button[type="submit"],
+  .city-bldg,
+  .city-route-line,
+  .city-pulse-ring,
+  .city-float-elem,
+  .city-float-elem-slow,
+  .city-ambient-glow {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    max-width: 100% !important;
+    border-right-color: transparent !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .civic-action-card::after {
+    display: none !important;
+  }
+}

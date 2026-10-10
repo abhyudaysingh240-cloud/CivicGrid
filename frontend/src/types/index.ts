@@ -165,13 +165,16 @@ export interface Assignment {
 }
 
 export interface Scenario {
-  id: number;
-  scenario_code: string;
+  id?: number;
+  /** Returned by backend as 'code' (e.g. 'A', 'B', 'C', 'D', 'E') */
+  code?: string;
+  /** Legacy alias — kept for backwards compatibility */
+  scenario_code?: string;
   name: string;
   description: string;
-  is_active: boolean;
-  initial_fault_edges_json: string[];
-  expected_outcome: string;
+  is_active?: boolean;
+  initial_fault_edges_json?: string[];
+  expected_outcome?: string;
 }
 
 export interface AuditLog {

@@ -1,0 +1,322 @@
+/* cluster-ranking.css
+ * Scoped styles for the Problem Hotspots (Ranked) panel in AdminDashboard.
+ * Follows existing CivicGrid design tokens from tokens.css / index.css.
+ * Delete this file (+ the import + mount in AdminDashboard) to remove the feature.
+ */
+
+.cr-section {
+  margin-top: 0;
+}
+
+/* ── Controls bar ─────────────────────────────────────────────────────────── */
+.cr-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cr-controls select,
+.cr-controls label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dark-primary, #e2e8f0);
+  background: var(--surface-dark-2, #1e293b);
+  border: 1px solid var(--border-dark, #334155);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.cr-controls select:focus,
+.cr-controls label:focus-within {
+  outline: 2px solid var(--coral-strong, #f43f5e);
+  outline-offset: 1px;
+}
+
+.cr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+}
+
+.cr-toggle input[type='checkbox'] {
+  width: 0.9rem;
+  height: 0.9rem;
+  accent-color: var(--coral-strong, #f43f5e);
+  cursor: pointer;
+}
+
+/* ── Skip banner ─────────────────────────────────────────────────────────── */
+.cr-skip-banner {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dark-muted, #64748b);
+  padding: 0.25rem 0.75rem;
+  background: var(--surface-dark-2, #1e293b);
+  border: 1px solid var(--border-dark, #334155);
+  border-radius: 0.75rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Empty / error state ─────────────────────────────────────────────────── */
+.cr-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dark-muted, #64748b);
+}
+
+.cr-error {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 0.75rem;
+}
+
+/* ── Cluster grid ──────────────────────────────────────────────────────────── */
+.cr-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Individual cluster card ─────────────────────────────────────────────── */
+.cr-card {
+  background: var(--surface-dark-2, #1e293b);
+  border: 1px solid var(--border-dark, #334155);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.cr-card:hover {
+  border-color: var(--coral-strong, #f43f5e);
+}
+
+.cr-card:focus-within {
+  outline: 2px solid var(--coral-strong, #f43f5e);
+  outline-offset: 2px;
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────── */
+.cr-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.cr-card-header:focus {
+  outline: none;
+}
+
+.cr-rank {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--coral-strong, #f43f5e);
+  min-width: 2rem;
+}
+
+.cr-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-problem-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dark-primary, #e2e8f0);
+}
+
+.cr-address {
+  font-size: 0.68rem;
+  color: var(--text-dark-muted, #64748b);
+  font-family: sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.1rem;
+}
+
+/* ── Priority badge ──────────────────────────────────────────────────────── */
+.cr-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.cr-badge--HIGH {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.cr-badge--MEDIUM {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.cr-badge--LOW {
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+/* ── Stats row ───────────────────────────────────────────────────────────── */
+.cr-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 0.6rem 1rem;
+}
+
+.cr-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface-dark-1, #0f172a);
+  border: 1px solid var(--border-dark, #334155);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  min-width: 3.5rem;
+}
+
+.cr-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-dark-primary, #e2e8f0);
+  line-height: 1;
+}
+
+.cr-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  color: var(--text-dark-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.1rem;
+}
+
+/* ── Status mix chips ────────────────────────────────────────────────────── */
+.cr-mix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0 1rem 0.6rem 1rem;
+}
+
+.cr-mix-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.4rem;
+  text-transform: uppercase;
+}
+
+/* ── Footer row: timestamps + map link ────────────────────────────────────── */
+.cr-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-dark, #334155);
+}
+
+.cr-timestamps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dark-muted, #64748b);
+}
+
+.cr-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #38bdf8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-style: dotted;
+  transition: color 0.15s;
+}
+
+.cr-map-link:hover {
+  color: #7dd3fc;
+}
+
+/* ── Expanded drill-down panel ───────────────────────────────────────────── */
+.cr-expanded {
+  padding: 0.5rem 1rem 0.75rem 1rem;
+  border-top: 1px solid var(--border-dark, #334155);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cr-expanded-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dark-muted, #64748b);
+  margin-bottom: 0.2rem;
+}
+
+.cr-report-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dark-primary, #e2e8f0);
+}
+
+.cr-report-id {
+  color: var(--coral-light, #fb7185);
+  font-weight: 700;
+}
+
+.cr-chevron {
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 0.7rem;
+  color: var(--text-dark-muted, #64748b);
+}
+
+.cr-chevron--open {
+  transform: rotate(180deg);
+}

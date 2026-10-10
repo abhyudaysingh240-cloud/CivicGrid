@@ -20,6 +20,7 @@ interface AppShellProps {
   setActiveRole: (role: Role) => void;
   onLogout: () => void;
   onOpenLogin: () => void;
+  onSwitchRole?: (role: Role) => void;
   children: React.ReactNode;
 }
 
@@ -29,15 +30,15 @@ export const AppShell: React.FC<AppShellProps> = ({
   setActiveRole,
   onLogout,
   onOpenLogin,
+  onSwitchRole,
   children,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isGridOperator = activeRole === 'ADMIN' || activeRole === 'DEPARTMENT_OFFICER';
 
-  // Role navigation items available based on authenticated credentials
-  // Role is enforced server-side via /auth/me; only staff roles can switch views
-  const isStaff = currentUser?.role === 'ADMIN' || currentUser?.role === 'DEPARTMENT_OFFICER';
-
+  // All 4 role views are always available in the sidebar.
+  // Security is enforced server-side (RBAC on every API call).
+  // Sidebar is a convenience switcher — the Dev Role Switcher in Navbar also calls setActiveRole.
   const roleNavItems: { role: Role; label: string; icon: React.ReactNode; description: string }[] = [
     {
       role: 'CITIZEN',
@@ -65,13 +66,14 @@ export const AppShell: React.FC<AppShellProps> = ({
     },
   ];
 
-  // Available roles: staff can preview worker/citizen or manage system; citizen only accesses Citizen
-  const allowedRoles = isStaff
-    ? roleNavItems
-    : currentUser?.role === 'FIELD_WORKER'
-    ? roleNavItems.filter((i) => i.role === 'FIELD_WORKER' || i.role === 'CITIZEN')
-    : roleNavItems.filter((i) => i.role === 'CITIZEN');
-
+  // Filter sidebar menu items strictly based on user.registeredRole
+  const allowedRoles = roleNavItems.filter((i) => {
+    if (currentUser?.role === 'ADMIN' || currentUser?.role === 'DEPARTMENT_OFFICER') {
+      return i.role === 'ADMIN' || i.role === 'DEPARTMENT_OFFICER';
+    }
+    if (currentUser?.role === 'FIELD_WORKER') return i.role === 'FIELD_WORKER';
+    return i.role === 'CITIZEN';
+  });
   const containerBg = isGridOperator ? 'bg-[var(--bg-dark)]' : 'bg-[var(--bg-light)]';
   const sidebarBg = isGridOperator
     ? 'bg-[var(--surface-dark-1)] border-[var(--border-dark)] text-[var(--text-dark-primary)]'
@@ -85,6 +87,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         activeRole={activeRole}
         onLogout={onLogout}
         onOpenLogin={onOpenLogin}
+        onSwitchRole={onSwitchRole ?? setActiveRole}
       />
 
       <div className="flex-1 flex overflow-hidden">

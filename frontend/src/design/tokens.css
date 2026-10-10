@@ -105,9 +105,8 @@
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
 
-  /* ── Citizen base font (18px) with A-/A/A+ scale ── */
-  --citizen-font-scale: 1;
-  --citizen-base: calc(18px * var(--citizen-font-scale));
+  /* ── Citizen base font ── */
+  --citizen-base: 1rem;
 
   /* ── Min touch target ── */
   --touch-min: 48px;
@@ -132,23 +131,4 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* ── Citizen font scale classes ── */
-.citizen-font-sm  { --citizen-font-scale: 0.889; }
-.citizen-font-md  { --citizen-font-scale: 1;     }
-.citizen-font-lg  { --citizen-font-scale: 1.167; }
-
-/* ── High contrast override ── */
-.high-contrast {
-  --bg-light:     #FFFFFF;
-  --text-primary: #000000;
-  --border-light: #000000;
-  --stone-border: #000000;
-  --card-light:   #FFFFFF;
-  --card-alt:     #F0F0F0;
-  --status-healthy:  #1A4731;
-  --status-faulted:  #7F0000;
-  --status-warning:  #7A3800;
-  --status-isolated: #3B0070;
 }
